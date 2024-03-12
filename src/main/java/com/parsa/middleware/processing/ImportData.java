@@ -68,7 +68,7 @@ import java.util.logging.Logger;
  */
 @Component
 public class ImportData extends Utility {
-	private final Logger logger;
+	private Logger logger;
 	//private final ImportHandler importHandler;
 	private QueueEntity currentQueueElement;
 	private final ImportStatistic importStatistic;
@@ -103,8 +103,8 @@ public class ImportData extends Utility {
 		this.changeManagement = changeManagement;
 		this.classificationManagement = classificationManagement;
 		//logger = ImportLogger.createBOMILogger(loggerFilePath, queueElement.getTaskID(), queueElement.getDrawingNumber());
-		logger = Logger.getLogger(ImportData.class.getName());
-		logger.info(String.format("Use the logger %s.", logger.getName()));
+		//logger = Logger.getLogger(ImportData.class.getName());
+		//logger.info(String.format("Use the logger %s.", logger.getName()));
 
 		//setLogFileName(queueElement);
 
@@ -118,12 +118,12 @@ public class ImportData extends Utility {
 		importStatistic = new ImportStatistic();
 
 		//initializeStatistic();
-		try {
-			logger.severe(session.getConnection().getDiscriminator());
-		} catch (final CanceledOperationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			logger.severe(session.getConnection().getDiscriminator());
+//		} catch (final CanceledOperationException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 
 	private void setLogFileName(QueueEntity queueElement) {
@@ -280,7 +280,9 @@ public class ImportData extends Utility {
 	 *
 	 * @param jsonObject
 	 */
-	public String importStructure(JSONObject jsonObject) {
+	public String importStructure(JSONObject jsonObject, Logger logger) {
+
+		this.logger = logger;
 		logger.info("Start the import of the given JSON structure.");
 		structureMustBeRevised = false;
 		structureWasCreated = false;

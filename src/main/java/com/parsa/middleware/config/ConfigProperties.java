@@ -1,15 +1,21 @@
 package com.parsa.middleware.config;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 
 
 @Configuration
 public class ConfigProperties {
+
+    @Autowired
+    private Environment environment;
 
     @Value("${TC.url}")
     private String url;
@@ -44,6 +50,9 @@ public class ConfigProperties {
     @Value("${application.searchParallel}")
     private String searchParallel;
 
+    @Value("${application.parallelImport}")
+    private String parallelImport;
+
     public String getUrl() {
         return url;
     }
@@ -53,7 +62,8 @@ public class ConfigProperties {
     }
 
     public String getuName() {
-        return uName;
+        String decryptedUserName = decryptProperty(uName);
+        return decryptedUserName;
     }
 
     public void setuName(String uName) {
@@ -61,7 +71,9 @@ public class ConfigProperties {
     }
 
     public String getPassword() {
-        return password;
+
+        String decryptedPassword = decryptProperty(password);
+        return decryptedPassword;
     }
 
     public void setPassword(String password) {
@@ -122,5 +134,22 @@ public class ConfigProperties {
 
     public void setSearchParallel(String searchParallel) {
         this.searchParallel = searchParallel;
+    }
+
+    public String getParallelImport() {
+        return parallelImport;
+    }
+
+    public void setParallelImport(String parallelImport) {
+        this.parallelImport = parallelImport;
+    }
+
+    private String decryptProperty(String encryptedProperty) {
+        // Check if property is encrypted
+        if (StringUtils.isEmpty(encryptedProperty)) {
+            return encryptedProperty;
+        }
+        // Decrypt property
+        return  encryptedProperty.startsWith("ENC(") ? encryptedProperty.substring(4, encryptedProperty.length() - 1) : encryptedProperty;
     }
 }
