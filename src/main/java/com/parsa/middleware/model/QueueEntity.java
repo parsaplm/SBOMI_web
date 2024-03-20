@@ -1,5 +1,7 @@
 package com.parsa.middleware.model;
 
+import com.parsa.middleware.enums.ImportStatus;
+
 import javax.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.Objects;
@@ -24,8 +26,9 @@ public class QueueEntity {
     @Column(name = "number_of_container")
     private int numberOfContainer;
     @Basic
+    @Enumerated(EnumType.STRING)
     @Column(name = "current_status")
-    private String currentStatus;
+    private ImportStatus currentStatus;
     @Basic
     @Column(name = "teamcenter_root_object")
     private String teamcenterRootObject;
@@ -94,11 +97,11 @@ public class QueueEntity {
         this.numberOfContainer = numberOfContainer;
     }
 
-    public String getCurrentStatus() {
+    public ImportStatus getCurrentStatus() {
         return currentStatus;
     }
 
-    public void setCurrentStatus(String currentStatus) {
+    public void setCurrentStatus(ImportStatus currentStatus) {
         this.currentStatus = currentStatus;
     }
 

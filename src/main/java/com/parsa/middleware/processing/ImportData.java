@@ -4,7 +4,10 @@ import com.parsa.middleware.businessobjects.*;
 import com.parsa.middleware.businessobjects.Dataset;
 import com.parsa.middleware.config.ConfigProperties;
 import com.parsa.middleware.constants.TcConstants;
+import com.parsa.middleware.enums.ImportStatus;
+import com.parsa.middleware.logger.ImportLogger;
 import com.parsa.middleware.model.QueueEntity;
+import com.parsa.middleware.repository.QueueRepository;
 import com.parsa.middleware.service.*;
 import com.parsa.middleware.session.AppXSession;
 import com.parsa.middleware.util.JsonUtil;
@@ -47,7 +50,11 @@ import com.teamcenter.soa.exceptions.NotLoadedException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -66,7 +73,8 @@ import java.util.logging.Logger;
  *
  * @author(name = "Lukas Keul", company = "Parsa PLM GmbH")
  */
-@Component
+@Service
+@Scope("prototype")
 public class ImportData extends Utility {
 	private Logger logger;
 	//private final ImportHandler importHandler;
@@ -88,20 +96,25 @@ public class ImportData extends Utility {
 	// Boolean
 	private boolean structureWasCreated;
 	private boolean structureMustBeRevised;
+	private  AppXSession session;
+	private   ConfigProperties settings;
+	private   ChangeManagement changeManagement;
+	private   ClassificationManagement classificationManagement;
 
-	private  final AppXSession session;
+	private QueueRepository queueRepository;
 
-	private  final ConfigProperties settings;
 
-	private final  ChangeManagement changeManagement;
+	public ImportData(ApplicationContext context) {
 
-	private  final ClassificationManagement classificationManagement;
+//		this.settings = settings;
+//		this.changeManagement = changeManagement;
+//		this.classificationManagement = classificationManagement;
+		this.session = context.getBean(AppXSession.class);
+		this.settings = context.getBean(ConfigProperties.class);
+		this.changeManagement = context.getBean(ChangeManagement.class);
+		this.classificationManagement = context.getBean(ClassificationManagement.class);
+		this.queueRepository = context.getBean(QueueRepository.class);
 
-	public ImportData(AppXSession currentSession, ConfigProperties settings, ChangeManagement changeManagement, ClassificationManagement classificationManagement) {
-
-		this.settings = settings;
-		this.changeManagement = changeManagement;
-		this.classificationManagement = classificationManagement;
 		//logger = ImportLogger.createBOMILogger(loggerFilePath, queueElement.getTaskID(), queueElement.getDrawingNumber());
 		//logger = Logger.getLogger(ImportData.class.getName());
 		//logger.info(String.format("Use the logger %s.", logger.getName()));
@@ -113,7 +126,7 @@ public class ImportData extends Utility {
 		itemList = new ArrayList<>();
 		containerList = new ArrayList<>();
 
-		session = currentSession;
+//		session = currentSession;
 
 		importStatistic = new ImportStatistic();
 
@@ -160,7 +173,7 @@ public class ImportData extends Utility {
 		importStatistic.setAmountOfContainers(currentQueueElement.getNumberOfContainer());
 		importStatistic.setAmountOfObjects(currentQueueElement.getNumberOfContainer());
 		importStatistic.setSyslogFile(session.getConnection().getTcSessionInfo().extraInfo.get("syslogFile"));
-		importStatistic.setTcServerUrl(getSettings().getServerURL());
+		importStatistic.setTcServerUrl(getSettings().getUrl());
 	}
 
 	private void setPolicy() {
@@ -173,7 +186,7 @@ public class ImportData extends Utility {
 						TcConstants.TEAMCENTER_ITEM_ID, "Smc0HasVariantConfigContext" }));
 		objectPropertyPolicy.addType(getPolicyType("ItemRevision",
 				new String[] { TcConstants.TEAMCENTER_OBJECT_GROUP, TcConstants.TEAMCENTER_ITEM_TAG,
-						TcConstants.TEAMCENTER_ALL_WORKFLOWS, TcConstants.TEAMCENTER_OBJECT_STRING }));
+						TcConstants.TEAMCENTER_ALL_WORKFLOWS, TcConstants.TEAMCENTER_OBJECT_STRING,TcConstants.TEAMCENTER_RELEASE_STATUS_LIST}));
 		objectPropertyPolicy.addType(getPolicyType("BOMLine",
 				new String[] { TcConstants.TEAMCENTER_BOMLINE_REVISION, TcConstants.TEAMCENTER_BOMLINE_WINDOW,
 						TcConstants.TEAMCENTER_BOMLINE_RELATIVE_TRANSFORMATION_MATRIX,
@@ -280,9 +293,11 @@ public class ImportData extends Utility {
 	 *
 	 * @param jsonObject
 	 */
-	public String importStructure(JSONObject jsonObject, Logger logger) {
+	public String importStructure(JSONObject jsonObject, Logger logger, QueueEntity queue, AtomicBoolean isCancelled ) {
+		currentQueueElement = queue;
+//		this.logger = logger;
+		this.logger = ImportLogger.createBOMILogger(settings.getLogFolder(), queue.getTaskId(), queue.getDrawingNumber());
 
-		this.logger = logger;
 		logger.info("Start the import of the given JSON structure.");
 		structureMustBeRevised = false;
 		structureWasCreated = false;
@@ -290,6 +305,24 @@ public class ImportData extends Utility {
 		importStatistic.setStartImportTime();
 		importStatistic.setCanClassify(getSettings().isAlwaysClassify());
 		importStatistic.setSuccessfulClassification(getSettings().isAlwaysClassify());
+
+		try {
+			Thread.sleep(5000); // Delay for 5 seconds
+			System.out.println("5 seconds have passed.");
+			// More code to execute after the delay
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+
+		if (isTaskCancelled(currentQueueElement.getTaskId())) {
+			logger.info("The import is canceled.");
+			endImport(true);
+			return "";
+		}
+
+		// Your import logic here...
+
 		teamcenterLogin();
 		try {
 //			setPolicy();
@@ -369,6 +402,8 @@ public class ImportData extends Utility {
 			importStatistic.setEndImportTime();
 			endImport(false);
 		}
+
+
 
 		return "";
 	}
@@ -537,11 +572,7 @@ public class ImportData extends Utility {
 		final SearchManagement searchManagement = new SearchManagement(logger, modularBuilding.getReleaseStatus(),
 				session);
 		//final ChangeManagement changeManagement = new ChangeManagement(this, logger, session);
-//		if (importHandler.importIsCanceled(currentQueueElement)) {
-//			logger.info("The import is canceled.");
-//			endImport(true);
-//			return "";
-//		}
+
 
 		// We start to collect the solution variants
 		//currentQueueElement.incrementImportProgess();
@@ -563,6 +594,9 @@ public class ImportData extends Utility {
 //			return "";
 //		}
 
+
+
+
 		// The next import may start now
 //		importHandler.setFlag(true);
 
@@ -580,6 +614,12 @@ public class ImportData extends Utility {
 //			createStructure();
 
 		modularBuilding.setHasParent(false);
+
+		if (isTaskCancelled(currentQueueElement.getTaskId())) {
+			logger.info("The import is canceled.");
+			endImport(true);
+			return "";
+		}
 
 //		if (importHandler.importIsCanceled(currentQueueElement)) {
 //			logger.info("The import is canceled.");
@@ -1341,6 +1381,12 @@ public class ImportData extends Utility {
 		// The next import may start now
 //		importHandler.setFlag(true);
 
+		if (isTaskCancelled(currentQueueElement.getTaskId())) {
+			logger.info("The import is canceled.");
+			endImport(true);
+			return "";
+		}
+
 //		if (importHandler.importIsCanceled(currentQueueElement)) {
 //			logger.info("The import is canceled.");
 //			endImport(false);
@@ -1353,6 +1399,12 @@ public class ImportData extends Utility {
 //				currentQueueElement);
 
 		structureObject = buildStructure(jsonObject, structureObject, searchManagement);
+
+		if (isTaskCancelled(currentQueueElement.getTaskId())) {
+			logger.info("The import is canceled.");
+			endImport(true);
+			return "";
+		}
 
 //		if (importHandler.importIsCanceled(currentQueueElement)) {
 //			logger.info("The import is canceled.");
@@ -1407,6 +1459,12 @@ public class ImportData extends Utility {
 		// The next import may start now
 //		importHandler.setFlag(true);
 
+		if (isTaskCancelled(currentQueueElement.getTaskId())) {
+			logger.info("The import is canceled.");
+			endImport(true);
+			return "";
+		}
+
 //		if (importHandler.importIsCanceled(currentQueueElement)) {
 //			logger.info("The import is canceled.");
 //			endImport(false);
@@ -1419,6 +1477,12 @@ public class ImportData extends Utility {
 //				currentQueueElement);
 
 		startStructureCreation(searchManagement, rootStructureObject);
+
+		if (isTaskCancelled(currentQueueElement.getTaskId())) {
+			logger.info("The import is canceled.");
+			endImport(true);
+			return "";
+		}
 
 //		if (importHandler.importIsCanceled(currentQueueElement)) {
 //			logger.info("The import is canceled.");
@@ -1512,7 +1576,11 @@ public class ImportData extends Utility {
 			endImport(true);
 			return "";
 		}
-
+		if (isTaskCancelled(currentQueueElement.getTaskId())) {
+			logger.info("The import is canceled.");
+			endImport(true);
+			return "";
+		}
 //		if (importHandler.importIsCanceled(currentQueueElement)) {
 //			logger.info("The import is canceled.");
 //			endImport(true);
@@ -1745,8 +1813,8 @@ public class ImportData extends Utility {
 		final DataManagementService dataManagementService = DataManagementService.getService(session.getConnection());
 
 		// Get the dataset files
-		final String filename = jsonFileName.substring(0,
-				jsonFileName.lastIndexOf("."));
+		final String filename = currentQueueElement.getFilename().substring(0,
+				currentQueueElement.getFilename().lastIndexOf("."));
 		final String datasetFolder = getSettings().getTransactionFolder() + File.separator
 				+ TcConstants.FOLDER_DATASET + File.separator + filename;
 
@@ -3356,5 +3424,10 @@ public class ImportData extends Utility {
 
 			changePropertiesOfStructure2(bomChild, childObject, searchManagement);
 		}
+	}
+
+	public boolean isTaskCancelled(int taskId) {
+		Optional<QueueEntity> queueEntityOptional = queueRepository.findById(taskId);
+		return queueEntityOptional.map(queueEntity -> queueEntity.getCurrentStatus().equals(ImportStatus.CANCELED.toString())).orElse(false);
 	}
 }

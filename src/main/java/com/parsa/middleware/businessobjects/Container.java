@@ -440,7 +440,18 @@ public class Container implements StructureObject {
 					TcConstants.JSON_FAMILY_ID, TcConstants.JSON_FEATURE_ID, TcConstants.JSON_WORKFLOW,
 					TcConstants.JSON_RELEASE_STATUS });
 
-			final Set<String> set = (Set<String>) comparingObject.keys();
+//			final Set<String> set = (Set<String>) comparingObject.keys();
+
+			// Get the keys iterator
+			Iterator<String> keysIterator = comparingObject.keys();
+
+			// Create a set to store the keys
+			Set<String> set = new HashSet<>();
+
+			// Iterate through the keys iterator and add keys to the set
+			while (keysIterator.hasNext()) {
+				set.add(keysIterator.next());
+			}
 
 			// Do both objects have the same keys?
 			if (!set.equals(jsonObject.keys())) {
