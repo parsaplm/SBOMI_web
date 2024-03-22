@@ -17,7 +17,14 @@ public class MwApiController {
     private ImportService importService;
     @GetMapping("/import")
     public ResponseEntity<String> startImport() {
-        importService.refreshToDoFolderAndImport();
+        importService.importDataForToDoFolder();
+        return ResponseEntity.ok("Import process triggered successfully");
+    }
+
+
+    @GetMapping("/updateTODOFolder")
+    public ResponseEntity<String> updateTODOFolder() {
+        importService.refreshToDoFolder();
         return ResponseEntity.ok("Import process triggered successfully");
     }
 

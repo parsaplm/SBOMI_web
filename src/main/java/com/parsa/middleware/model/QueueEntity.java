@@ -1,11 +1,15 @@
 package com.parsa.middleware.model;
 
 import com.parsa.middleware.enums.ImportStatus;
-
 import javax.persistence.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+
+@EntityListeners(QueueEntityListener.class)
 @Entity
 @Table(name = "queue", schema = "dbo", catalog = "sbomiDB")
 public class QueueEntity {
@@ -129,7 +133,7 @@ public class QueueEntity {
         this.importTime = importTime;
     }
 
-    public Object getCreationDate() {
+    public OffsetDateTime getCreationDate() {
         return creationDate;
     }
 
@@ -151,6 +155,7 @@ public class QueueEntity {
 
     public void setEndImportDate(OffsetDateTime endImportDate) {
         this.endImportDate = endImportDate;
+        importTime = (int)Duration.between(startImportDate, endImportDate).getSeconds();
     }
 
     public Integer getNumberOfObjects() {
@@ -194,4 +199,50 @@ public class QueueEntity {
     protected void onCreate() {
         creationDate = OffsetDateTime.now();
     }
+
+    public void incrementImportProgess() {
+        importProgress++;
+    }
+
+    @Transient
+    private QueueEntity oldState;
+
+
+    public QueueEntity getOldState() {
+        return oldState;
+    }
+
+    public void setOldState(QueueEntity oldState) {
+        this.oldState = oldState;
+    }
+
+    @PostLoad
+    public void postLoad() {
+        this.oldState = copy(); // Make a copy of the current state
+    }
+
+    public QueueEntity copy() {
+        QueueEntity copy = new QueueEntity();
+        Field[] fields = this.getClass().getDeclaredFields();
+
+        for (Field field : fields) {
+            try {
+                // Make the field accessible
+                field.setAccessible(true);
+
+                // Skip static and transient fields
+                if (!Modifier.isStatic(field.getModifiers()) && !Modifier.isTransient(field.getModifiers())) {
+                    // Get the value of the field in the current instance
+                    Object value = field.get(this);
+
+                    // Set the value of the field in the copy instance
+                    field.set(copy, value);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace(); // Handle exception appropriately
+            }
+        }
+        return copy;
+    }
+
 }

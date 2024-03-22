@@ -1,7 +1,6 @@
 package com.parsa.middleware.service;
 
 import com.parsa.middleware.config.ConfigProperties;
-import com.parsa.middleware.config.StatusColorConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -37,9 +36,6 @@ public class SettingsService {
 
     @Autowired
     private RestTemplate restTemplate;
-    @Autowired
-    private StatusColorConfig statusColorProperties;
-
 
     @Autowired
     public SettingsService(ConfigProperties appConfig, @Value("${SPRING_CONFIG_LOCATION}") String configLocation) {
@@ -78,9 +74,6 @@ public class SettingsService {
     }
 
 
-
-
-
     private Map<String, Object> convertToMap(ConfigProperties updatedConfigProperties) {
         Map<String, Object> propertiesMap = new HashMap<>();
         try {
@@ -105,8 +98,6 @@ public class SettingsService {
             String propertyPath = entry.getKey();
             Object propertyValue = entry.getValue();
             setPropertyValue(yamlData, propertyPath, propertyValue);
-//            updateConfigProperties(entry.getKey(), entry.getValue());
-
         }
     }
 
@@ -140,7 +131,7 @@ public class SettingsService {
             Value valueAnnotation = field.getAnnotation(Value.class);
             if (valueAnnotation != null) {
                 // Get the key from the @Value annotation
-                String key = valueAnnotation.value();
+                String key = field.getName();
                 // Remove the ${} from the key
                 key = key.replaceAll("\\$\\{(.+?)\\}", "$1");
                 // Get the value from the Environment
@@ -183,27 +174,4 @@ public class SettingsService {
     }
 
 
-    public String updateStatusColors(Map<String, String> newStatusColors) throws IOException {
-        try {
-            // Update status colors in the StatusColorConfig bean
-            statusColorProperties.setColors(newStatusColors);
-
-            // Write the updated status colors to the application.yaml file
-            updateYamlFile(newStatusColors);
-
-            return "Status colors updated successfully!";
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "Failed to update status colors";
-        }
-    }
-    private void updateYamlFile(Map<String, String> newStatusColors) throws IOException {
-        // Write the updated status colors to the application.yaml file
-        try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(configLocation))) {
-            writer.write("status-colors:\n");
-            for (Map.Entry<String, String> entry : newStatusColors.entrySet()) {
-                writer.write(String.format("  %s: \"%s\"\n", entry.getKey(), entry.getValue()));
-            }
-        }
-    }
 }

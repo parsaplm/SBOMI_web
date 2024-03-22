@@ -1,17 +1,14 @@
 package com.parsa.middleware.controller;
 
 import com.parsa.middleware.config.ConfigProperties;
-import com.parsa.middleware.config.StatusColorConfig;
 import com.parsa.middleware.enums.ImportStatus;
 import com.parsa.middleware.model.StatusColor;
+import com.parsa.middleware.processing.Utility;
 import com.parsa.middleware.service.SettingsService;
 import com.parsa.middleware.service.StatusColorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,9 +22,10 @@ public class SettingsController {
     @Autowired
     private StatusColorService statusColorService;
 
-
     @Autowired
-    private StatusColorConfig statusColorProperties;
+    private Environment environment;
+
+
 
     @Autowired
     public SettingsController(SettingsService settingsService, ConfigProperties configProperties) {
@@ -45,9 +43,12 @@ public class SettingsController {
     @GetMapping("/config")
     public Map<String, String> getAllConfigurations() {
         Map<String, String> configurations = new HashMap<>();
-
+        configurations.put("applicationVersion", Utility.getApplicationVersion());
+        configurations.put("databaseName", getDatabaseName());
+        configurations.put("hostname",Utility.getHostName());
+        configurations.putAll(settingsService.getAllConfigurations());
         // Add more properties as needed
-        return  settingsService.getAllConfigurations();
+        return  configurations;
     }
 
     @GetMapping("/getAllStatus")
@@ -76,5 +77,11 @@ public class SettingsController {
         return statusColorService.addStatusColors(statusColors);
     }
 
+
+    public String getDatabaseName() {
+        return environment.getProperty("spring.datasource.url")
+                .split(";")[1] // Extracts "DatabaseName=sbomiDB"
+                .split("=")[1]; // Extracts "sbomiDB"
+    }
 
 }

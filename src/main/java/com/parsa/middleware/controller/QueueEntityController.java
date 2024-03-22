@@ -1,8 +1,12 @@
 package com.parsa.middleware.controller;
 
+import com.parsa.middleware.dto.CombinedAuditDTO;
 import com.parsa.middleware.enums.ImportStatus;
+import com.parsa.middleware.model.AuditLog;
 import com.parsa.middleware.model.QueueEntity;
+import com.parsa.middleware.repository.AuditLogRepository;
 import com.parsa.middleware.repository.QueueRepository;
+import com.parsa.middleware.service.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +26,9 @@ public class QueueEntityController {
     @Autowired
     private QueueRepository queueRepository;
 
+    @Autowired
+    private AuditService auditService;
+
     @GetMapping("/queue-entities")
     public Page<QueueEntity> getQueueEntitiesByStatus(
             @RequestParam("statuses") List<ImportStatus> statuses,
@@ -33,6 +40,11 @@ public class QueueEntityController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
 
         // Call the repository method with the list of statuses
-        return queueRepository.findByCurrentStatusIn(statuses, pageable);
+        return queueRepository.findByCurrentStatusInOrderByIsFavoriteDesc(statuses, pageable);
+    }
+
+    @GetMapping("/auditLogs")
+    public CombinedAuditDTO getAuditLogs(@RequestParam Long entityId) {
+        return auditService.getAuditLogs(entityId);
     }
 }

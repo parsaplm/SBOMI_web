@@ -34,14 +34,14 @@ uName: ENC(QM4oRpdrMiLRdV0zdmpyQhOqOM/hsDu207fJGY0xqKx4cJZZDbZloizH+VqAw+rk)
 password: ENC(MZMcppLKPE4XjYHyvakE2UDInlwaGb1cFD4dWQ6G6rPJThCS52xqAunoJJWy9z33)
 tcMaxRetries: '100'
 tcRetryDelay: 0
-transaction-folder-path: /Users/imranali/Desktop/transaction
-log-folder-path: /Users/imranali/Desktop/transaction/log
-updateCron: 0 0 * * * *
+transactionFolder: /Users/imranali/Desktop/transaction
+logFolder: /Users/imranali/Desktop/transaction/logs
+updateSchedule: 0 0 * * * *
 parallelImport: 2
 maximumErrors: '524'
 alwaysClassify: false
 searchParallel: 1
-deleteSchedule: 0 * * * * *
+deleteSchedule: '0 0 * * * *'
 app:
   frontend: {
     base-url: '*'

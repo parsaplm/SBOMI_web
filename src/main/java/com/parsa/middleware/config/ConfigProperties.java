@@ -1,28 +1,17 @@
 package com.parsa.middleware.config;
 
+import com.parsa.middleware.processing.Utility;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
-import org.springframework.util.ReflectionUtils;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-
-
-import java.lang.reflect.Proxy;
-
-
-import java.lang.reflect.Field;
-import java.util.Map;
-
+import org.springframework.core.env.Environment;
 
 @Configuration
 @RefreshScope
 public class ConfigProperties {
+
 
     @Value("${url}")
     private String url;
@@ -38,18 +27,18 @@ public class ConfigProperties {
     @Value("${tcMaxRetries}")
     private String tcMaxRetries;
 
-    @Value("${transaction-folder-path}")
+    @Value("${transactionFolder}")
     private String transactionFolder;
 
-    @Value("${log-folder-path}")
+    @Value("${logFolder}")
     private String logFolder;
 
 
     @Value("${tcRetryDelay}")
     private String tcRetryDelay;
 
-    @Value("${updateCron}")
-    private String importCronExpression;
+    @Value("${updateSchedule}")
+    private String updateSchedule;
 
     @Value("${alwaysClassify}")
     private boolean alwaysClassify;
@@ -65,7 +54,6 @@ public class ConfigProperties {
     private String maximumErrors;
     @Value("${deleteSchedule}")
     private String deleteSchedule;
-
 
     public String getUrl() {
         return url;
@@ -94,12 +82,12 @@ public class ConfigProperties {
         this.password = password;
     }
 
-    public String getImportCronExpression() {
-        return importCronExpression;
+    public String getUpdateSchedule() {
+        return updateSchedule;
     }
 
-    public void setImportCronExpression(String importCronExpression) {
-        this.importCronExpression = importCronExpression;
+    public void setUpdateSchedule(String updateSchedule) {
+        this.updateSchedule = updateSchedule;
     }
 
     public String getTcMaxRetries() {
@@ -176,6 +164,7 @@ public class ConfigProperties {
     }
 
 
+
     private String decryptProperty(String encryptedProperty) {
         // Check if property is encrypted
         if (StringUtils.isEmpty(encryptedProperty)) {
@@ -183,15 +172,6 @@ public class ConfigProperties {
         }
         // Decrypt property
         return  encryptedProperty.startsWith("ENC(") ? encryptedProperty.substring(4, encryptedProperty.length() - 1) : encryptedProperty;
-    }
-
-
-
-    // Reload method to update properties with new values
-    // Reload method to update properties with new values
-    // Reload method to update properties with new values
-    public void reload(Map<String, Object> yamlData) {
-
     }
 
 

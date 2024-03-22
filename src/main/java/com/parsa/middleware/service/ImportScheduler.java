@@ -12,19 +12,18 @@ public class ImportScheduler {
     private ImportService importService;
 
 
-    @Scheduled(cron = "#{@configProperties.getImportCronExpression()}")
+    @Scheduled(cron = "#{@configProperties.getUpdateSchedule()}")
     public void importData() {
 
-
-//        importService.importData(); // Trigger import process according to the configured schedule
-        importService.refreshToDoFolderAndImport();
+        System.out.println("ImportScheduler.importData() is called");
+        importService.importDataForToDoFolder();
 
     }
 
     @PostConstruct
     public void importDataOnStartup() {
         //importService.importData(); // Trigger import process when the application starts
-        importService.refreshToDoFolderAndImport();
+        importService.importDataForToDoFolder();
     }
 
 }

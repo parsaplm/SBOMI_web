@@ -61,6 +61,7 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -293,7 +294,7 @@ public class ImportData extends Utility {
 	 *
 	 * @param jsonObject
 	 */
-	public String importStructure(JSONObject jsonObject, Logger logger, QueueEntity queue, AtomicBoolean isCancelled ) {
+	public String importStructure(JSONObject jsonObject, QueueEntity queue ) {
 		currentQueueElement = queue;
 //		this.logger = logger;
 		this.logger = ImportLogger.createBOMILogger(settings.getLogFolder(), queue.getTaskId(), queue.getDrawingNumber());
@@ -306,15 +307,6 @@ public class ImportData extends Utility {
 		importStatistic.setCanClassify(getSettings().isAlwaysClassify());
 		importStatistic.setSuccessfulClassification(getSettings().isAlwaysClassify());
 
-		try {
-			Thread.sleep(5000); // Delay for 5 seconds
-			System.out.println("5 seconds have passed.");
-			// More code to execute after the delay
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-
 		if (isTaskCancelled(currentQueueElement.getTaskId())) {
 			logger.info("The import is canceled.");
 			endImport(true);
@@ -322,7 +314,9 @@ public class ImportData extends Utility {
 		}
 
 		// Your import logic here...
-
+		setLogFileName(queue);
+		queue.setStartImportDate(OffsetDateTime.now());
+		queueRepository.save(queue);
 		teamcenterLogin();
 		try {
 //			setPolicy();
@@ -575,7 +569,8 @@ public class ImportData extends Utility {
 
 
 		// We start to collect the solution variants
-		//currentQueueElement.incrementImportProgess();
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
 
@@ -606,6 +601,9 @@ public class ImportData extends Utility {
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
 
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
+
 		// create method to createStructure()
 //		final ModularBuilding modularBuilding = searchAndCreateStructure(jsonObject, searchManagement,
 //				similarStructuresMap);
@@ -631,7 +629,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 //		changeProperties(searchManagement, modularBuilding);
 
 		long startDatasetTime = System.currentTimeMillis();
@@ -650,6 +649,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		importStatistic.setSuccessfulImport(true);
 		endImport(false);
@@ -897,8 +898,8 @@ public class ImportData extends Utility {
 				}
 			} else {
 				try { // TODO: possible NPE on line 823
-					if (!currentObject.getChildren().isEmpty()
-							&& currentObject.getBomLine().get_bl_child_lines().length != currentObject.getChildren()
+					if (!currentObject.getChildren().isEmpty() &&
+					currentObject.getBomLine() != null && currentObject.getBomLine().get_bl_child_lines().length != currentObject.getChildren()
 									.size()) {
 						for (final StructureObject childObject : currentObject.getChildren()) {
 							addChildrenToBOMLineWithTiming(currentObject, childObject);
@@ -1354,7 +1355,8 @@ public class ImportData extends Utility {
 	//	currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 		// Create the StructureObject depending on the root object type
 		StructureObject structureObject;
 		switch (JsonUtil.getAttribute(jsonObject, TcConstants.JSON_OBJECT_TYPE)) {
@@ -1397,6 +1399,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		structureObject = buildStructure(jsonObject, structureObject, searchManagement);
 
@@ -1416,6 +1420,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		//final ChangeManagement changeManagement = new ChangeManagement(this,  session, settings);
 		changePropertiesOfStructure2(structureObject.getBomLine(), structureObject, searchManagement);
@@ -1424,6 +1430,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		importStatistic.setSuccessfulImport(true);
 		endImport(false);
@@ -1448,6 +1456,8 @@ public class ImportData extends Utility {
 	//	currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		// Create the solution variants
 		if (!createSolutionVariants(searchManagement,
@@ -1475,6 +1485,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		startStructureCreation(searchManagement, rootStructureObject);
 
@@ -1494,6 +1506,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		changeSingleObjectProperties(rootStructureObject.getBomLine(), rootStructureObject,
 				searchManagement);
@@ -1505,6 +1519,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 
 		importStatistic.setSuccessfulImport(true);
 		endImport(false);
@@ -1547,7 +1563,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 		// Create structure
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
@@ -1594,7 +1611,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 		//final ChangeManagement changeManagement = new ChangeManagement(this, session, settings);
 		changePropertiesOfStructure2(structureObject.getBomLine(), structureObject, searchManagement);
 
@@ -1602,7 +1620,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 		importStatistic.setSuccessfulImport(true);
 		endImport(true);
 
@@ -1692,7 +1711,8 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 		// Create the solution variant object with all necessary properties
 		final SolutionVariant solutionVariant = new SolutionVariant(jsonObject, null, 0);
 		solutionVariant.setHasParent(false);
@@ -1718,7 +1738,8 @@ public class ImportData extends Utility {
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
 		// Change the properties and classify the object
-
+		currentQueueElement.incrementImportProgess();
+		queueRepository.save(currentQueueElement);
 		// Import done
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
