@@ -55,7 +55,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.AccessibleObject;
@@ -66,6 +68,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
@@ -569,8 +572,12 @@ public class ImportData extends Utility {
 
 
 		// We start to collect the solution variants
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+
+		currentQueueElement = updateImportProgress(currentQueueElement);
+
+
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
 
@@ -601,8 +608,10 @@ public class ImportData extends Utility {
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
 
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+
+		currentQueueElement = updateImportProgress(currentQueueElement);
 
 		// create method to createStructure()
 //		final ModularBuilding modularBuilding = searchAndCreateStructure(jsonObject, searchManagement,
@@ -629,8 +638,10 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+
+		currentQueueElement = updateImportProgress(currentQueueElement);
 //		changeProperties(searchManagement, modularBuilding);
 
 		long startDatasetTime = System.currentTimeMillis();
@@ -642,15 +653,18 @@ public class ImportData extends Utility {
 		changeSingleObjectProperties(modularBuilding.getBomLine(), modularBuilding, searchManagement);
 
 		updateJsonObjects(modularBuilding);
-		updateJsonFile(modularBuilding);
+//		updateJsonFile(modularBuilding);
+		updateJsonFile(currentQueueElement,modularBuilding,session);
 
 		// We are done
 
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+
+		currentQueueElement = updateImportProgress(currentQueueElement);
 
 		importStatistic.setSuccessfulImport(true);
 		endImport(false);
@@ -1355,8 +1369,10 @@ public class ImportData extends Utility {
 	//	currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		// Create the StructureObject depending on the root object type
 		StructureObject structureObject;
 		switch (JsonUtil.getAttribute(jsonObject, TcConstants.JSON_OBJECT_TYPE)) {
@@ -1399,8 +1415,10 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+
+		currentQueueElement = updateImportProgress(currentQueueElement);
 
 		structureObject = buildStructure(jsonObject, structureObject, searchManagement);
 
@@ -1420,9 +1438,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
-
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		//final ChangeManagement changeManagement = new ChangeManagement(this,  session, settings);
 		changePropertiesOfStructure2(structureObject.getBomLine(), structureObject, searchManagement);
 
@@ -1430,9 +1448,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
-
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		importStatistic.setSuccessfulImport(true);
 		endImport(false);
 
@@ -1456,9 +1474,9 @@ public class ImportData extends Utility {
 	//	currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
-
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		// Create the solution variants
 		if (!createSolutionVariants(searchManagement,
 				JsonUtil.getAttribute(rootStructureObject.getJsonObject(), TcConstants.JSON_REVISION_RULE))) {
@@ -1485,9 +1503,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
-
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		startStructureCreation(searchManagement, rootStructureObject);
 
 		if (isTaskCancelled(currentQueueElement.getTaskId())) {
@@ -1506,9 +1524,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
-
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		changeSingleObjectProperties(rootStructureObject.getBomLine(), rootStructureObject,
 				searchManagement);
 
@@ -1519,9 +1537,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
-
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		importStatistic.setSuccessfulImport(true);
 		endImport(false);
 
@@ -1563,8 +1581,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		// Create structure
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
@@ -1611,8 +1630,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		//final ChangeManagement changeManagement = new ChangeManagement(this, session, settings);
 		changePropertiesOfStructure2(structureObject.getBomLine(), structureObject, searchManagement);
 
@@ -1620,8 +1640,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		importStatistic.setSuccessfulImport(true);
 		endImport(true);
 
@@ -1711,8 +1732,9 @@ public class ImportData extends Utility {
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		// Create the solution variant object with all necessary properties
 		final SolutionVariant solutionVariant = new SolutionVariant(jsonObject, null, 0);
 		solutionVariant.setHasParent(false);
@@ -1738,8 +1760,9 @@ public class ImportData extends Utility {
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
 //				currentQueueElement);
 		// Change the properties and classify the object
-		currentQueueElement.incrementImportProgess();
-		queueRepository.save(currentQueueElement);
+//		currentQueueElement.incrementImportProgess();
+//		queueRepository.save(currentQueueElement);
+		currentQueueElement = updateImportProgress(currentQueueElement);
 		// Import done
 //		currentQueueElement.incrementImportProgess();
 //		importHandler.changeValue(TcConstants.DATABASE_IMPORT_PROGRESS, currentQueueElement.getImportProgress(),
@@ -2091,6 +2114,13 @@ public class ImportData extends Utility {
 
 	private void updateJsonFile(StructureObject structureObject) {
 //		importHandler.updateJsonFile(currentQueueElement, structureObject, session);
+	}
+
+	private void updateJsonFile(QueueEntity queueElement, StructureObject structureObject, AppXSession session) {
+		logger.info(String.format("Update the data of the JSON file %s.", queueElement.getFilename()));
+			FileManagement.createUpdatedFile(queueElement, structureObject, settings.getTransactionFolder(), logger,
+					session);
+
 	}
 
 	/**
@@ -3446,9 +3476,42 @@ public class ImportData extends Utility {
 			changePropertiesOfStructure2(bomChild, childObject, searchManagement);
 		}
 	}
-
+	@Transactional(readOnly = true)
 	public boolean isTaskCancelled(int taskId) {
-		Optional<QueueEntity> queueEntityOptional = queueRepository.findById(taskId);
-		return queueEntityOptional.map(queueEntity -> queueEntity.getCurrentStatus().equals(ImportStatus.CANCELED.toString())).orElse(false);
+
+		// Fetch the QueueEntity from the database to get the latest status
+		Optional<QueueEntity> optionalEntity = queueRepository.findById(taskId);
+
+		// Check if the entity is present and if the status is CANCELED
+		if (optionalEntity.isPresent()) {
+			QueueEntity updatedElement = optionalEntity.get();
+			if (updatedElement.getCurrentStatus().equals(ImportStatus.CANCELED)) {
+				return true; // Return if the status is CANCELED
+			}
+
+		}
+		return false;
 	}
+
+	@Transactional
+	public QueueEntity updateImportProgress(QueueEntity existingEntity) {
+		// Fetch the QueueEntity from the database
+		Optional<QueueEntity> optionalEntity = queueRepository.findById(existingEntity.getTaskId());
+
+		if (optionalEntity.isPresent()) {
+			QueueEntity entity = optionalEntity.get();
+			existingEntity.incrementImportProgess();
+
+			// Update the import progress property
+			entity.setImportProgress(existingEntity.getImportProgress());
+
+			// Save the updated entity to the database
+			return queueRepository.save(entity);
+		} else {
+			// Handle case where entity is not found
+			throw new EntityNotFoundException("QueueEntity with taskId " + existingEntity.getTaskId() + " not found");
+		}
+	}
+
+
 }

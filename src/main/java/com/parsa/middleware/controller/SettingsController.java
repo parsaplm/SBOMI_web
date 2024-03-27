@@ -67,9 +67,9 @@ public class SettingsController {
                 .orElseThrow(() -> new RuntimeException("Status not found"));
     }
 
-    @PutMapping("/status-colors/{status}")
-    public StatusColor updateStatusColor(@PathVariable String status, @RequestBody String color) {
-        return statusColorService.updateStatusColor(status, color);
+    @PutMapping("/status-colors")
+    public StatusColor updateStatusColor(@RequestBody StatusColor request) {
+        return statusColorService.updateStatusColor(request.getStatus(), request.getColor());
     }
 
     @PostMapping("/status-colors/add")

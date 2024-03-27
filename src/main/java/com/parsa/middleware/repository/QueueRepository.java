@@ -21,6 +21,9 @@ public interface QueueRepository extends JpaRepository<QueueEntity, Integer> {
 
     QueueEntity findByFilename(String filename);
 
+    List<QueueEntity>  findByCurrentStatus(ImportStatus status);
+
+
 
     QueueEntity findFirstByFilenameOrderByTaskIdDesc(String name);
 

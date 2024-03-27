@@ -18,13 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.parsa.middleware.constants.TcConstants.*;
@@ -32,37 +37,15 @@ import static com.parsa.middleware.constants.TcConstants.*;
 @Service
 public class ImportService {
 
+    private static final int DEFAULT_MAX_PARALLEL_IMPORTS = 1;
+    final ThreadPoolExecutor threadPool;
     private final Logger logger = Logger.getLogger("SBOMILogger");
-
+    private final ConfigProperties configProperties;
+    private final ApplicationContext context;
+    private final Map<ImportStatus, String> statusFolderMapping;
     @Autowired
     private QueueRepository queueRepository;
-    private final ConfigProperties configProperties;
-
-    private static final int DEFAULT_MAX_PARALLEL_IMPORTS = 1;
-
-
-    private final ApplicationContext context;
-
-
-//    private ThreadPoolExecutor taskExecutor;
-
-    private final Map<Integer, Future<?>> runningTasks = new ConcurrentHashMap<>();
-
-    private final Map<ImportStatus, String> statusFolderMapping;
-
-
-    String todoFolderPath, inProgressFolderPath, errorFolderPath, doneFolderPath, cancelFolderPath;
-
-    private final Semaphore importSemaphore;
-
-    private ExecutorService taskExecutor;
-
-    public ExecutorService getTaskExecutor() {
-        if (taskExecutor == null) {
-            taskExecutor = Executors.newFixedThreadPool(getMaxParallelImportsFromConfig());
-        }
-        return taskExecutor;
-    }
+    private List<Thread> threadList = new ArrayList<>();
 
     @Autowired
     public ImportService(ConfigProperties configProperties, ApplicationContext context) {
@@ -77,11 +60,186 @@ public class ImportService {
         statusFolderMapping.put(ImportStatus.DONE, FOLDER_DONE);
         statusFolderMapping.put(ImportStatus.DELETED, FOLDER_DELETED);
         statusFolderMapping.put(ImportStatus.IN_REVIEW, FOLDER_IN_REVIEW);
-
-
-        importSemaphore = new Semaphore(getMaxParallelImportsFromConfig());
+        threadPool = createThreadPool();
 
     }
+
+    public void startImport() {
+        logger.info("Start the import of all files in the 'todo' folder.");
+        updateThreadList(); // Update list and start imports
+    }
+
+    private ThreadPoolExecutor createThreadPool() {
+        return (ThreadPoolExecutor) Executors.newFixedThreadPool(getMaxParallelImportsFromConfig());
+    }
+
+    private void updateThreadList() {
+        synchronized (threadList) {
+            // Get queue elements and filter based on status
+            List<QueueEntity> todoList = queueRepository.findByCurrentStatus(ImportStatus.IN_SCOPE);
+
+            // Sort as in the original code (optional)
+            todoList.sort(Comparator.comparing(QueueEntity::isFavorite, Comparator.reverseOrder())
+                    .thenComparing(QueueEntity::getTaskId));
+
+            // Start new imports if there's space available
+            int maxParallelImports = getMaxParallelImportsFromConfig();
+            for (QueueEntity queueEntity : todoList) {
+                if (threadList.size() >= maxParallelImports) {
+                    break; // Maximum parallel imports reached
+                }
+
+                boolean alreadyImporting = false;
+                for (Thread thread : threadList) {
+                    // Check if the file is already being imported
+                    if (thread.getName().equals(queueEntity.getFilename())) {
+                        alreadyImporting = true;
+                        break;
+                    }
+                }
+                if (!alreadyImporting) {
+                    Thread importThread = createImportThread(queueEntity);
+                    threadList.add(importThread);
+                    importThread.start();
+                }
+            }
+        }
+    }
+    @Transactional
+    public Thread createImportThread(QueueEntity element) {
+        Thread importThread  = new Thread(() -> {
+            try {
+
+                // Fetch the QueueEntity from the database to get the latest status
+                Optional<QueueEntity> optionalEntity = queueRepository.findById(element.getTaskId());
+
+                // Check if the entity is present and if the status is CANCELED
+                if (optionalEntity.isPresent()) {
+                    QueueEntity updatedElement = optionalEntity.get();
+                    if (updatedElement.getCurrentStatus().equals(ImportStatus.CANCELED)) {
+                        return; // Return if the status is CANCELED
+                    }
+                } else {
+                    // Handle case where entity is not found
+                    logger.severe("Entity not found in the database. %s"+ element.getFilename());
+                    return; // Return early if the entity is not found
+                }
+
+
+                // File access and status checks
+                logger.info(String.format("Start the import of the file %s.", element.getFilename()));
+
+
+                String filePath = Paths.get(configProperties.getTransactionFolder() + File.separator + FOLDER_TODO
+                        + File.separator + element.getFilename()).toString();
+                if (!new File(filePath).exists()) {
+                    logger.severe(String.format("The JSON file %s is not accessible. Can't start the import.",
+                            element.getFilename()));
+                    return;
+                }
+
+                if (!element.getCurrentStatus().equals(ImportStatus.IN_SCOPE)) {
+                    logger.warning(String.format("The status of the import of %s isn't IN_SCOPE anymore.",
+                            element.getFilename()));
+                    return;
+                }
+
+                // Attempt to acquire a lock (non-blocking) on the file
+                File file = new File(filePath);
+                FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
+                FileLock lock = channel.tryLock(0L, Long.MAX_VALUE, true);
+
+                try {
+                    if (lock != null) {
+
+                            // Read file content while holding the lock
+                            String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
+                            JSONObject jsonObject = new JSONObject(jsonString);
+
+                            // Reset import status and progress (assuming relevant methods in QueueElement)
+                            element.setImportProgress(0);
+
+
+                            // Change import status to IN_PROGRESS (assuming relevant method in QueueElement)
+                            element.setCurrentStatus(ImportStatus.IN_PROGRESS);
+
+                            //queueRepository.save(element); // Update progress in repository
+                            moveFileToInProgressFolder(element.getFilename());
+                            // Set import start time
+                            element.setStartImportDate(OffsetDateTime.now());
+                            element.setSbomiHostName(Utility.getHostName());
+//                        updateQueueElementStartTime(element); // Update start time in repository
+                            queueRepository.save(element);
+                            // Import logic (replace with your actual implementation)
+                            ImportData localImportData = context.getBean(ImportData.class);
+                            final String teamcenterObjectName = localImportData.importStructure(jsonObject, element);
+                            // Update status based on import result
+                            if (teamcenterObjectName != null && !teamcenterObjectName.isEmpty()) {
+                                moveFileToDoneFolder(element.getFilename());
+                                element.setCurrentStatus(ImportStatus.DONE);
+                                element.setTeamcenterRootObject(teamcenterObjectName);
+                            } else {
+
+                                Optional<QueueEntity> updateEntityOptional = queueRepository.findById(element.getTaskId());
+
+                                // Check if the entity is present and if the status is CANCELED
+                                if (updateEntityOptional.isPresent()) {
+                                    QueueEntity updatedElement = updateEntityOptional.get();
+                                    if (updatedElement.getCurrentStatus().equals(ImportStatus.CANCELED)) {
+                                        element.setCurrentStatus(ImportStatus.CANCELED);
+                                        moveFileToInCancelFolder(element.getFilename());
+                                    } else {
+                                        moveFileToErrorFolder(element.getFilename());
+                                        element.setCurrentStatus(ImportStatus.ERROR);
+                                    }
+
+//                                if (element.getCurrentStatus().equals(ImportStatus.CANCELED)) {
+////                                // Import canceled
+////                                // (No need to update queue or finished table as assumed in original code)
+//                                    moveFileToInCancelFolder(element.getFilename());
+////                                return;
+//                                }
+                                }
+
+                            }
+                            element.setEndImportDate(OffsetDateTime.now());
+                            queueRepository.save(element);
+                        } else{
+                            logger.severe("File is already locked by another thread/process.");
+                        }
+
+                } finally {
+                    if (lock != null) {
+                        lock.release();
+                    }
+                }
+
+            } catch (IOException e) {
+                logger.severe(e.getMessage());
+                element.setCurrentStatus(ImportStatus.ERROR);
+                queueRepository.save(element);
+                e.printStackTrace();
+            } catch (Exception e) {
+                // Unexpected exception
+                element.setCurrentStatus(ImportStatus.ERROR);
+                queueRepository.save(element);
+                logger.severe(e.getMessage());
+                e.printStackTrace();
+            } finally {
+                // (Assuming session handling is not relevant in this context)
+                synchronized (threadList) {
+                    threadList.remove(Thread.currentThread());
+                }
+                importDataForToDoFolder();
+            }
+        });
+
+        importThread.setName(element.getFilename());
+        return importThread;
+    }
+
+
+    //new code ends
 
     @Transactional
     public void refreshToDoFolder() {
@@ -97,6 +255,8 @@ public class ImportService {
                     // Check if the file name exists in the queue table with current status as "ERROR"
                     QueueEntity existingErrorEntity = queueRepository.findFirstByFilenameAndCurrentStatusOrderByCreationDateDesc(file.getName(), ImportStatus.ERROR);
 
+                    QueueEntity existingInScopeEntity = queueRepository.findFirstByFilenameAndCurrentStatusOrderByCreationDateDesc(file.getName(), ImportStatus.IN_SCOPE);
+
                     if (existingErrorEntity != null) {
                         // If file with the same name exists in "ERROR" status, use that file
                         Path sourceFolderPath = Paths.get(todoFolderPath, file.getName());
@@ -105,7 +265,10 @@ public class ImportService {
                         queueEntity.setCreationDate(existingErrorEntity.getCreationDate());
                         queueEntity.setCurrentStatus(ImportStatus.IN_SCOPE);
                         queueRepository.save(queueEntity);
+                    } else if (existingInScopeEntity != null) {
+                        //File is already in scope, don't do anything..
                     } else {
+                        System.out.println("Saving new file..." + file.getName());
                         Path sourceFolderPath = Paths.get(todoFolderPath, file.getName());
                         QueueEntity queueEntity = parseJson(new File(sourceFolderPath.toString()));
                         queueEntity.setCurrentStatus(ImportStatus.IN_SCOPE);
@@ -121,116 +284,7 @@ public class ImportService {
     @Transactional
     public void importDataForToDoFolder() {
         refreshToDoFolder();
-        importData();
-    }
-
-    @Transactional
-    public void importData_old() {
-
-        System.out.println("Importing JSON data...");
-
-//        taskExecutor = new ThreadPoolExecutor(getMaxParallelImportsFromConfig(), getMaxParallelImportsFromConfig(), 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-
-
-        // Fetch files from the database with status 'in scope' and order by favorite = true
-        List<QueueEntity> filesToProcess = queueRepository.findByCurrentStatusOrderByIsFavoriteDesc(ImportStatus.IN_SCOPE);
-
-        for (QueueEntity fileToProcess : filesToProcess) {
-            if (runningTasks.size() < getMaxParallelImportsFromConfig()) {
-                String fileName = fileToProcess.getFilename();
-
-                moveFileToInProgressFolder(fileName);
-
-                fileToProcess.setCurrentStatus(ImportStatus.IN_PROGRESS);
-                queueRepository.save(fileToProcess);
-
-                // Execute task with associated task ID
-//                Future<?> task = taskExecutor.submit(() -> processFile(fileName, fileToProcess.getTaskId()));
-//                runningTasks.put(fileToProcess.getTaskId(), task);
-            } else {
-                // Wait for some task to complete before proceeding
-                break;
-            }
-        }
-    }
-
-
-    @Transactional
-    public void importData() {
-
-        System.out.println("Importing JSON data...");
-
-//        taskExecutor = new ThreadPoolExecutor(getMaxParallelImportsFromConfig(), getMaxParallelImportsFromConfig(), 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
-
-
-        // Fetch files from the database with status 'in scope' and order by favorite = true
-        List<QueueEntity> filesToProcess = queueRepository.findByCurrentStatusOrderByIsFavoriteDesc(ImportStatus.IN_SCOPE);
-
-        for (QueueEntity fileToProcess : filesToProcess) {
-            if (importSemaphore.tryAcquire()) {
-                String fileName = fileToProcess.getFilename();
-
-                moveFileToInProgressFolder(fileName);
-
-                fileToProcess.setCurrentStatus(ImportStatus.IN_PROGRESS);
-                queueRepository.save(fileToProcess);
-
-                // Execute task with associated task ID
-                Future<?> task = getTaskExecutor().submit(() -> processFile(fileName, fileToProcess.getTaskId()));
-                runningTasks.put(fileToProcess.getTaskId(), task);
-
-
-//                runningTasks.put(fileToProcess.getTaskId(), task);
-            } else {
-                // Wait for some task to complete before proceeding
-                break;
-            }
-        }
-    }
-
-
-    private void processFile(String fileName, int taskId) {
-        try {
-            // Read file content
-            inProgressFolderPath = configProperties.getTransactionFolder() + "/" + TcConstants.FOLDER_IN_PROGRESS;
-            Path sourceFolderPath = Paths.get(inProgressFolderPath, fileName);
-            String content = new String(Files.readAllBytes(sourceFolderPath));
-
-            // Perform import logic
-            final JSONObject jsonObject = new JSONObject(content);
-
-            QueueEntity element;
-            Optional<QueueEntity> optionalQueueEntity = queueRepository.findById(taskId);
-            if (optionalQueueEntity.isEmpty()) {
-                return;
-            } else {
-                element = optionalQueueEntity.get();
-            }
-            // Import the file
-            ImportData localImportData = context.getBean(ImportData.class);
-            final String teamcenterObjectName = localImportData.importStructure(jsonObject, element);
-            // Update status based on import result
-            if (teamcenterObjectName != null && !teamcenterObjectName.isEmpty()) {
-                moveFileToDoneFolder(fileName);
-                element.setCurrentStatus(ImportStatus.DONE);
-                element.setTeamcenterRootObject(teamcenterObjectName);
-            } else {
-                moveFileToErrorFolder(fileName);
-                element.setCurrentStatus(ImportStatus.ERROR);
-            }
-            element.setEndImportDate(OffsetDateTime.now());
-
-            queueRepository.save(element);
-        } catch (IOException | JSONException e) {
-            // Handle exceptions
-            Thread.currentThread().interrupt(); // Restore interrupted status
-            e.printStackTrace();
-        } finally {
-            runningTasks.remove(taskId);
-            importSemaphore.release(); // Release the semaphore
-            importDataForToDoFolder(); // Refresh and Start the next import
-        }
-
+        startImport();
     }
 
     private QueueEntity parseJson(File jsonFile) {
@@ -243,7 +297,6 @@ public class ImportService {
             queueEntity.setFavorite(false);
 
             queueEntity.setLogfileName("");
-            queueEntity.setSbomiHostName("");
             queueEntity.setTeamcenterRootObject("<empty>");
 
             final JSONObject json = JsonUtil.readJsonFile(logger, jsonFile);
@@ -263,14 +316,8 @@ public class ImportService {
         // Assuming Queue class is your entity and JSON matches its structure
     }
 
-
+    @Transactional
     public void cancelImport(int taskId) {
-        Future<?> taskThread = runningTasks.get(taskId);
-        if (taskThread != null) {
-            taskThread.cancel(true); // Interrupt the thread associated with the task ID
-        }
-        // Optionally, you can remove the thread from the map if needed
-        runningTasks.remove(taskId);
 
         Optional<QueueEntity> queueEntity = queueRepository.findById(taskId);
         QueueEntity entity = queueEntity.get();
@@ -335,6 +382,11 @@ public class ImportService {
         moveFile(configProperties.getTransactionFolder() + "/" + FOLDER_TODO, errorFolderPath, fileName);
     }
 
+    private void moveFileToInCancelFolder(String fileName) {
+        String cancelFolderPath = configProperties.getTransactionFolder() + "/" + FOLDER_CANCELED;
+        moveFile(configProperties.getTransactionFolder() + "/" + FOLDER_IN_PROGRESS, cancelFolderPath, fileName);
+    }
+
     public boolean updateQueueStatus(int taskId, ImportStatus oldStatus, ImportStatus newStatus) {
         Optional<QueueEntity> queueEntityOptional = queueRepository.findById(taskId);
         if (queueEntityOptional.isEmpty()) {
@@ -342,11 +394,6 @@ public class ImportService {
         }
 
         QueueEntity queueEntity = queueEntityOptional.get();
-
-        // Validate the old status
-//        if (!oldStatus.equalsIgnoreCase(queueEntity.getCurrentStatus())) {
-//            return false; // Old status does not match current status
-//        }
 
         // Validate the new status and update the queue entity
         if (!statusFolderMapping.containsKey(newStatus)) {
