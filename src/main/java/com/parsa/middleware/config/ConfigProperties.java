@@ -54,6 +54,8 @@ public class ConfigProperties {
     private String maximumErrors;
     @Value("${deleteSchedule}")
     private String deleteSchedule;
+    @Value("${awcUrl}")
+    private String awcUrl;
 
     public String getUrl() {
         return url;
@@ -163,7 +165,13 @@ public class ConfigProperties {
         this.logFolder = logFolder;
     }
 
+    public String getAwcUrl() {
+        return awcUrl;
+    }
 
+    public void setAwcUrl(String awcUrl) {
+        this.awcUrl = awcUrl;
+    }
 
     private String decryptProperty(String encryptedProperty) {
         // Check if property is encrypted

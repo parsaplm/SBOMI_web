@@ -291,6 +291,26 @@ public class ImportData extends Utility {
 		return false;
 	}
 
+	public boolean checkTeamcenterLogin() {
+		try {
+			final User user = session.login(settings.getuName(), settings.getPassword());
+			if (user != null) {
+				session.logout();
+				return true;
+			}
+		} catch (final NullPointerException e) {
+			e.printStackTrace();
+		} catch (final RuntimeException e) {
+			e.printStackTrace();
+		} catch (final InvalidCredentialsException e) {
+			e.printStackTrace();
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+
 
 	/**
 	 * Start to create the structure that's described in the given JSONObject.

@@ -30,18 +30,19 @@ spring:
       driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     }
 url: http://dev6000:3000/tc
-uName: ENC(QM4oRpdrMiLRdV0zdmpyQhOqOM/hsDu207fJGY0xqKx4cJZZDbZloizH+VqAw+rk)
+uName: infodba
 password: ENC(MZMcppLKPE4XjYHyvakE2UDInlwaGb1cFD4dWQ6G6rPJThCS52xqAunoJJWy9z33)
-tcMaxRetries: '100'
-tcRetryDelay: 0
+tcMaxRetries: '10'
+tcRetryDelay: '1'
 transactionFolder: /Users/imranali/Desktop/transaction
-logFolder: /Users/imranali/Desktop/transaction/logs
+logFolder: /Users/imranali/Desktop/transaction/log
 updateSchedule: 0 0 * * * *
-parallelImport: 2
+parallelImport: '2'
 maximumErrors: '524'
 alwaysClassify: false
-searchParallel: 1
-deleteSchedule: '0 0 * * * *'
+searchParallel: '1'
+deleteSchedule: 0 0 * * * *
+awcUrl: http://dev6000:3000/tcs
 app:
   frontend: {
     base-url: '*'
