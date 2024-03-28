@@ -1,8 +1,6 @@
 package com.parsa.middleware.service;
 
-import com.parsa.middleware.service.ImportService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,16 +12,18 @@ public class ImportScheduler {
     private ImportService importService;
 
 
-    @Scheduled(cron = "#{@configProperties.getImportCronExpression()}")
+    @Scheduled(cron = "#{@configProperties.getUpdateSchedule()}")
     public void importData() {
 
+        System.out.println("ImportScheduler.importData() is called");
+        importService.importDataForToDoFolder();
 
-        importService.importData(); // Trigger import process according to the configured schedule
     }
 
     @PostConstruct
     public void importDataOnStartup() {
-        importService.importData(); // Trigger import process when the application starts
+        //importService.importData(); // Trigger import process when the application starts
+        importService.importDataForToDoFolder();
     }
 
 }

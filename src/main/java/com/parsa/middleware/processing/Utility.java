@@ -27,9 +27,22 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.logging.FileHandler;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.File;
+
+import java.io.InputStream;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 /**
  * 
@@ -488,5 +501,54 @@ public abstract class Utility {
 			return "Unknown";
 		}
 	}
+
+//	public static String getApplicationVersion() {
+//		try {
+//			File pomFile = new File("pom.xml");
+//			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+//			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+//			Document doc = dBuilder.parse(pomFile);
+//			doc.getDocumentElement().normalize();
+//
+//			NodeList nodeList = doc.getElementsByTagName("version");
+//
+//			for (int temp = 0; temp < nodeList.getLength(); temp++) {
+//				Node node = nodeList.item(temp);
+//				if (node.getNodeType() == Node.ELEMENT_NODE) {
+//					Element element = (Element) node;
+//					return element.getTextContent();
+//				}
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+//		return null;
+//	}
+
+	public static String getApplicationVersion() {
+		try {
+			// Load the pom.xml file from the classpath
+			InputStream inputStream = Utility.class.getResourceAsStream("/META-INF/maven/com.parsa.middleware/SBOMI_web_app/pom.xml");
+
+			DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+			Document doc = dBuilder.parse(inputStream);
+			doc.getDocumentElement().normalize();
+
+			NodeList nodeList = doc.getElementsByTagName("version");
+
+			for (int temp = 0; temp < nodeList.getLength(); temp++) {
+				Node node = nodeList.item(temp);
+				if (node.getNodeType() == Node.ELEMENT_NODE) {
+					Element element = (Element) node;
+					return element.getTextContent();
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Application Version not found: "  );
+		}
+		return null;
+	}
+
 
 }

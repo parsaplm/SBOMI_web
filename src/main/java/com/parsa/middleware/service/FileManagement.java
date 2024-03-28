@@ -196,7 +196,7 @@ public class FileManagement {
 			throws IOException {
 		logger.info("Deleting the file " + queueElement.getFilename());
 
-		final File file = new File(getPathToStatus(queueElement.getCurrentStatus(), transactionFolder, logger)
+		final File file = new File(getPathToStatus(ImportStatus.valueOf(queueElement.getCurrentStatus().toString()), transactionFolder, logger)
 				+ File.separator + queueElement.getFilename());
 		return Files.deleteIfExists(file.toPath());
 	}
@@ -299,12 +299,12 @@ public class FileManagement {
 	 * @param currentStatusString
 	 * @return
 	 */
-	public static String getPathToStatus(String currentStatusString, String transactionFolder, Logger logger) {
+	public static String getPathToStatus(ImportStatus currentStatusString, String transactionFolder, Logger logger) {
 		logger.info(String.format("Get the path to the files with the status %s.", currentStatusString));
 
-		ImportStatus currentStatus = ImportStatus.valueOf(currentStatusString.toUpperCase().replace("_", ""));
+//		ImportStatus currentStatus = ImportStatus.valueOf(currentStatusString.toUpperCase().replace("_", ""));
 
-		switch (currentStatus) {
+		switch (currentStatusString) {
 		case IN_SCOPE:
 			return transactionFolder + File.separator + TcConstants.FOLDER_TODO;
 		case IN_PROGRESS:
@@ -349,8 +349,8 @@ public class FileManagement {
 	 */
 	public static void moveFile(QueueEntity element, ImportStatus newStatus, String transactionFolder, Logger logger)
 			throws IOException {
-		final String currentPath = getPathToStatus(element.getCurrentStatus(), transactionFolder, logger);
-		final String newPath = getPathToStatus(newStatus.toString(), transactionFolder, logger);
+		final String currentPath = getPathToStatus(ImportStatus.valueOf(element.getCurrentStatus().toString()), transactionFolder, logger);
+		final String newPath = getPathToStatus(ImportStatus.valueOf(newStatus.toString()), transactionFolder, logger);
 
 		logger.info(String.format("Move the file %s from %s to %s.", element.getFilename(), currentPath, newPath));
 

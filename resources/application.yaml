@@ -1,102 +1,55 @@
-# Database
 spring:
-  main:
-    allow-bean-definition-overriding: true
-    banner-mode: off
+  main: {
+    allow-bean-definition-overriding: true,
+    banner-mode: false
+  }
   jpa:
-    hibernate:
+    hibernate: {
       ddl-auto: update
-    generate:
+    }
+    generate: {
       ddl: true
+    }
     properties:
-      hibernate:
-        dialect: org.hibernate.dialect.SQLServer2012Dialect
+      hibernate: {
+        dialect: org.hibernate.dialect.SQLServer2012Dialect,
         format_sql: true
+      }
       javax.persistence.jdbc.autoCommit: true
     show-sql: true
   datasource:
     driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
     platform: mssql
-    #DB connection:
-    #Containex Environment
-#    url: jdbc:sqlserver://witiln07\informig;DatabaseName=MW_TC_LN_Interface_TC14;integratedSecurity=true;encrypt=true;trustServerCertificate=true
-    #Development Environment
-#    url: jdbc:sqlserver://localhost:1433;DatabaseName=MW_TC_LN_Interface_TC;integratedSecurity=false;encrypt=true;trustServerCertificate=true
-#    username: sa
-#    password: MyPass@word
-#    Development Environment
     url: jdbc:sqlserver://dev6000:1433;DatabaseName=sbomiDB;integratedSecurity=false;encrypt=true;trustServerCertificate=true
-    username: sa
-    password: Infodba100
+    username: ENC(oh4KHRmJbkrgwMi6fB8eE54815FvdfO+Wj1uvXajdQf5SPnVT+TDi/g1adjELnpt)
+    password: ENC(zX8Aipex1Mhz84anz+EgDga1tkpSvUKMzglU0T5NuVbUnj9MFDDoYdhPKZiK+KWw)
     initialization-mode: always
     show-sql: true
-    hikari:
-      maximum-pool-size: 20
-
-
-
-#Teamcenter credentials
-TC:
-#  Local Config
-  url: http://dev6000:3000/tc
-  uName: infodba
-  password: infodba
-# UAT config
-#  url: http://wittcr01.lkw-walter.com:8080/tc
-#  uName: tcconnector
-#  password: Tcconnector1!
-# Logging level
-# Logging pattern
-
-#logging:
-#  level:
-#    org.springframework.data.jpa.repository.query: DEBUG
-#    org.springframework.jdbc.core: DEBUG
-#    org.springframework.jdbc: DEBUG
-#    org.hibernate: TRACE
-#    org.hibernate.SQL: DEBUG
-#    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-
-
-
-
-
-#management:
-#  endpoints:
-#    web:
-#      exposure:
-#        include: "*"
-#app:
-#  frontend:
-#    base-url: http://localhost:3000
-#  backend:
-#    base-url: http://localhost:8082
-#    appInstanceId: 4
-
-
-
-server:
-  port: 8089
-
-
-import:
-  schedule:
-    cron: "0 0 * * * *"
-
-
-logging:
-  level:
-    org:
-#      springframework=DEBUG:
-#    com.parsa.middleware.processing.ImportData: DEBUG
-#    root: DEBUG
-#    org.springframework.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
-
-
-application:
-  transaction-folder-path: "/Users/imranali/Desktop/transaction"
-  TcMaxRetries: 3
-  TcRetryDelay: 0
-  alwaysClassify: true
-  serverURL: "http://dev6000:3000/tc"
-  searchParallel: 1
+    hikari: {
+      maximum-pool-size: 20,
+      driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    }
+url: http://dev6000:3000/tc
+uName: infodba
+password: ENC(MZMcppLKPE4XjYHyvakE2UDInlwaGb1cFD4dWQ6G6rPJThCS52xqAunoJJWy9z33)
+tcMaxRetries: '10'
+tcRetryDelay: '1'
+transactionFolder: /Users/imranali/Desktop/transaction
+logFolder: /Users/imranali/Desktop/transaction/log
+updateSchedule: 0 0 * * * *
+parallelImport: '2'
+maximumErrors: '524'
+alwaysClassify: false
+searchParallel: '1'
+deleteSchedule: 0 0 * * * *
+awcUrl: http://dev6000:3000/tcs
+app:
+  frontend: {
+    base-url: '*'
+  }
+management:
+  endpoints:
+    web:
+      exposure: {
+        include: '*'
+      }

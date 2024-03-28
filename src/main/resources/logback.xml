@@ -1,6 +1,6 @@
 <configuration>
 
-    <property name="LOG_PATH" value="TCLogs" />
+    <property name="LOG_PATH" value="SBOMILogs" />
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -11,14 +11,14 @@
     </appender>
 
     <appender name="SAVE-TO-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/TCLogs.log</file>
+        <file>${LOG_PATH}/SBOMILogs.log</file>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>%d{dd-MM-yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M - %msg%n</Pattern>
         </encoder>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <!-- rollover daily -->
-            <fileNamePattern>${LOG_PATH}/archived/TCLogs_%d{dd-MM-yyyy}_%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/archived/SBOMILogs_%d{dd-MM-yyyy}_%i.log</fileNamePattern>
             <maxHistory>100</maxHistory>
             <totalSizeCap>100MB</totalSizeCap>
             <maxFileSize>10MB</maxFileSize>
@@ -29,7 +29,7 @@
 
 
     <root level="INFO">
-<!--        <appender-ref ref="SAVE-TO-FILE" />-->
+        <appender-ref ref="SAVE-TO-FILE" />
         <appender-ref ref="STDOUT"/>
 
     </root>

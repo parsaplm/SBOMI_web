@@ -90,8 +90,8 @@ public class ImportStatistic {
 				+ "\t__________________________________________________________________________\n" //
 				+ "\tThe import was successful: " + successfulImport + ".\n" //
 				+ "\tSBOMI IP Address: " + Utility.getClientIpAddress() + "\n" //
-				+ "\tTC Server IP Address : " + getTcServerUrl() + ".\n" //
-				+ "\tSBOMI Version : " + TcConstants.SBOMI_VERSION + ".\n" //
+//				+ "\tTC Server IP Address : " + getTcServerUrl() + ".\n" //
+				+ "\tSBOMI Version : " + Utility.getApplicationVersion() + ".\n" //
 				+ "\tThere are " + amountOfObjects + " objects in the structure.\n" //
 				+ "\tThere are " + amountOfContainers + " container objects in the structure.\n" //
 				+ "\tThe import took " + timeCompleteImport + " seconds.\n" //

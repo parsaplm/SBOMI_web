@@ -458,7 +458,13 @@ public class SolutionVariant implements StructureObject {
 //				String.format("Compare the JSONObjects %s and %s.", jsonObject.optString(TcConstants.JSON_OBJECT_NAME),
 //						comparingObject.optString(TcConstants.JSON_OBJECT_NAME)));
 		try {
-			final Set<String> set = (Set<String>) comparingObject.keys();
+//			final Set<String> set = (Set<String>) comparingObject.keys();
+
+			Iterator<String> keysIterator = comparingObject.keys();
+			Set<String> keySet = new HashSet<>();
+			while (keysIterator.hasNext()) {
+				keySet.add(keysIterator.next());
+			}
 
 			// Do both objects have the same keys?
 //			if (!set.equals(jsonObject.keySet())) {
@@ -467,7 +473,7 @@ public class SolutionVariant implements StructureObject {
 //			}
 
 			// Iterate through all keys
-			final Iterator<String> iterator = set.iterator();
+			final Iterator<String> iterator = keySet.iterator();
 			while (iterator.hasNext()) {
 				final String currentKey = iterator.next();
 
