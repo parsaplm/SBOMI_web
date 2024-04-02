@@ -19,7 +19,7 @@ public interface QueueRepository extends JpaRepository<QueueEntity, Integer> {
     Page<QueueEntity> findByCurrentStatusInOrderByIsFavoriteDesc(List<ImportStatus> statuses, Pageable pageable);
 
 
-    QueueEntity findByFilename(String filename);
+    Page<QueueEntity> findByFilename(String filename, Pageable pageable);
 
     List<QueueEntity>  findByCurrentStatus(ImportStatus status);
 
@@ -29,4 +29,9 @@ public interface QueueRepository extends JpaRepository<QueueEntity, Integer> {
 
 
     QueueEntity findFirstByFilenameAndCurrentStatusOrderByCreationDateDesc(String fileName, ImportStatus status);
+
+    Page<QueueEntity> findByDrawingNumber(String drawingNumber, Pageable pageable);
+
+    Page<QueueEntity> findByTeamcenterRootObject(String teamcenterRootObject, Pageable pageable);
+    Page<QueueEntity> findByLogfileName(String logFile, Pageable pageable);
 }
