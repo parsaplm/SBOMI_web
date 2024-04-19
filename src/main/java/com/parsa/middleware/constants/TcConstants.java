@@ -344,4 +344,10 @@ public class TcConstants {
 	public static final String TEAMCENTER_DATASET_PDF_REFERENCE = "PDF_Reference";
 	public static final String TEAMCENTER_DATASET_PNG = "PNG";
 
+	//queue entity Query Constants - search criteria
+	public static final String SC_FILE_NAME = "1";
+	public static final String SC_DRAWING_NUMBER = "2";
+	public static final String SC_TEAMCENTER_ROOT_OBJECT = "3";
+	public static final String SC_LOG_FILE_NAME = "4";
+
 }
