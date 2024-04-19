@@ -42,16 +42,16 @@ public class QueueEntityController {
         if (query != null && !query.isEmpty() && searchCriteria != null && !searchCriteria.isEmpty()) {
             switch (searchCriteria) {
                 case TcConstants.SC_FILE_NAME:
-                    response = queueRepository.findByFilenameAndCurrentStatusIn(query, statuses, pageable);
+                    response = queueRepository.findMatchingFilenameIncludeStatuses(query, statuses, pageable);
                     break;
                 case TcConstants.SC_DRAWING_NUMBER:
-                    response = queueRepository.findByDrawingNumberAndCurrentStatusIn(query, statuses, pageable);
+                    response = queueRepository.findMatchingDrawingNumberIncludeStatuses(query, statuses, pageable);
                     break;
                 case TcConstants.SC_TEAMCENTER_ROOT_OBJECT:
-                    response = queueRepository.findByTeamcenterRootObjectAndCurrentStatusIn(query, statuses, pageable);
+                    response = queueRepository.findMatchingTeamcenterRootObjectIncludeStatuses(query, statuses, pageable);
                     break;
                 case TcConstants.SC_LOG_FILE_NAME:
-                    response = queueRepository.findByLogfileNameAndCurrentStatusIn(query, statuses, pageable);
+                    response = queueRepository.findMatchingLogfileNameIncludeStatuses(query, statuses, pageable);
                     break;
 
             }
