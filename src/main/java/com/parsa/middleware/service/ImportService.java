@@ -8,6 +8,7 @@ import com.parsa.middleware.processing.ImportData;
 import com.parsa.middleware.processing.Utility;
 import com.parsa.middleware.repository.QueueRepository;
 import com.parsa.middleware.util.JsonUtil;
+import com.parsa.middleware.util.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -252,6 +253,11 @@ public class ImportService {
             // Check if files exist
             if (files != null && files.length > 0) {
                 for (File file : files) {
+                    //validate file extension as JSON
+
+                    if(!(TcConstants.FILE_EXT_JSON.equalsIgnoreCase(Utils.getFileExtension(file)))){
+                        continue;
+                    }
                     // Check if the file name exists in the queue table with current status as "ERROR"
                     QueueEntity existingErrorEntity = queueRepository.findFirstByFilenameAndCurrentStatusOrderByCreationDateDesc(file.getName(), ImportStatus.ERROR);
 
@@ -279,6 +285,7 @@ public class ImportService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     @Transactional

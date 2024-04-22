@@ -350,4 +350,5 @@ public class TcConstants {
 	public static final String SC_TEAMCENTER_ROOT_OBJECT = "3";
 	public static final String SC_LOG_FILE_NAME = "4";
 
+	public static final String FILE_EXT_JSON = ".json";
 }

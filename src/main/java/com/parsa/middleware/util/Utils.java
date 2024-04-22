@@ -9,9 +9,8 @@ import com.teamcenter.soa.client.model.Property;
 import com.teamcenter.soa.client.model.ServiceData;
 import com.teamcenter.soa.client.model.strong.RevisionRule;
 
-import java.util.Arrays;
+import java.io.File;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 public class Utils {
 
@@ -50,13 +49,13 @@ public class Utils {
     /**
      * Retrieves the revision rule as per input value. It looks for revision
      * rule from all available revision rules in system.
+     *
      * @param revRuleName Revision Rule name. If null or empty string passed,
-     *  first value from all revision rules is returned.
+     *                    first value from all revision rules is returned.
      * @return Revision Rule object
      * @throws Exception
      */
-    public static RevisionRule getRevisionRuleByName(String revRuleName, Connection m_connection) throws Exception
-    {
+    public static RevisionRule getRevisionRuleByName(String revRuleName, Connection m_connection) throws Exception {
         RevisionRule revRule = null;
         StructureManagementService m_smService = StructureManagementService.getService(m_connection);
         StructureManagement.GetRevisionRulesResponse ruleResp = m_smService.getRevisionRules();
@@ -64,19 +63,16 @@ public class Utils {
         RevisionRule retRevRule = null;
 
         // If an empty or null string passed, return first value
-        if(revRuleName == null || revRuleName.length() == 0)
-        {
+        if (revRuleName == null || revRuleName.length() == 0) {
             retRevRule = ruleResp.output.length > 0 ? ruleResp.output[0].revRule : null;
             return retRevRule;
         }
 
-        for(StructureManagement.RevisionRuleInfo revRuleInfo : ruleResp.output)
-        {
+        for (StructureManagement.RevisionRuleInfo revRuleInfo : ruleResp.output) {
             revRule = revRuleInfo.revRule;
 
-            com.teamcenter.soa.client.model.Property[] objNameProp = getObjectProperties(revRule, new String[] {"object_name"}, m_connection);
-            if(objNameProp[0].getDisplayableValue().equals(revRuleName))
-            {
+            com.teamcenter.soa.client.model.Property[] objNameProp = getObjectProperties(revRule, new String[]{"object_name"}, m_connection);
+            if (objNameProp[0].getDisplayableValue().equals(revRuleName)) {
                 retRevRule = revRule;
                 break;
             }
@@ -87,13 +83,13 @@ public class Utils {
 
     /**
      * This function loads the property explicitly which are not part of property policy
+     *
      * @param object
      * @param properties
      * @return
      * @throws Exception
      */
-    public static Property[] getObjectProperties (ModelObject object, String[] properties, Connection m_connection) throws Exception
-    {
+    public static Property[] getObjectProperties(ModelObject object, String[] properties, Connection m_connection) throws Exception {
         Property[] retVal = new Property[properties.length];
 
         com.teamcenter.services.strong.core.DataManagementService m_dmService = com.teamcenter.services.strong.core.DataManagementService.getService(m_connection);
@@ -101,8 +97,7 @@ public class Utils {
         ModelObject modelObject = sd.getPlainObject(0);
 
         int i = 0;
-        for(String prop : properties)
-        {
+        for (String prop : properties) {
             retVal[i++] = modelObject.getPropertyObject(prop);
         }
         return retVal;
@@ -113,8 +108,14 @@ public class Utils {
     }
 
 
-
-
+    public static String getFileExtension(File file) {
+        String name = file.getName();
+        int lastIndexOf = name.lastIndexOf(".");
+        if (lastIndexOf == -1) {
+            return ""; // empty extension
+        }
+        return name.substring(lastIndexOf);
+    }
 
 
 }
