@@ -2,8 +2,10 @@ package com.parsa.middleware.model;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
+@Table(name = "status_color")
 public class StatusColor {
     @Id
     private String status;

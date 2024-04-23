@@ -147,11 +147,11 @@ public class ImportService {
 
                 // Attempt to acquire a lock (non-blocking) on the file
                 File file = new File(filePath);
-                FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
-                FileLock lock = channel.tryLock(0L, Long.MAX_VALUE, true);
+               /* FileChannel channel = new RandomAccessFile(file, "rw").getChannel();
+                FileLock lock = channel.tryLock(0L, Long.MAX_VALUE, true);*/
 
-                try {
-                    if (lock != null) {
+               /* try {
+                    if (lock != null) {*/
 
                             // Read file content while holding the lock
                             String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
@@ -162,10 +162,14 @@ public class ImportService {
 
 
                             // Change import status to IN_PROGRESS (assuming relevant method in QueueElement)
-                            element.setCurrentStatus(ImportStatus.IN_PROGRESS);
+                            //element.setCurrentStatus(ImportStatus.IN_PROGRESS);
 
                             //queueRepository.save(element); // Update progress in repository
-                            moveFileToInProgressFolder(element.getFilename());
+                            //TODO we don't need this method
+                            //moveFileToInProgressFolder(element.getFilename());
+                            //move file to progress folder
+                            FileManagement.moveFile(element, ImportStatus.IN_PROGRESS, configProperties.getTransactionFolder(), logger);
+                            element.setCurrentStatus(ImportStatus.IN_PROGRESS);
                             // Set import start time
                             element.setStartImportDate(OffsetDateTime.now());
                             element.setSbomiHostName(Utility.getHostName());
@@ -176,9 +180,12 @@ public class ImportService {
                             final String teamcenterObjectName = localImportData.importStructure(jsonObject, element);
                             // Update status based on import result
                             if (teamcenterObjectName != null && !teamcenterObjectName.isEmpty()) {
-                                moveFileToDoneFolder(element.getFilename());
-                                element.setCurrentStatus(ImportStatus.DONE);
+                                //TODO we don't need this method
+                                //moveFileToDoneFolder(element.getFilename());
+                                //element.setCurrentStatus(ImportStatus.DONE);
                                 element.setTeamcenterRootObject(teamcenterObjectName);
+                                FileManagement.moveFile(element, ImportStatus.DONE, configProperties.getTransactionFolder(), logger);
+                                element.setCurrentStatus(ImportStatus.DONE);
                             } else {
 
                                 Optional<QueueEntity> updateEntityOptional = queueRepository.findById(element.getTaskId());
@@ -187,10 +194,17 @@ public class ImportService {
                                 if (updateEntityOptional.isPresent()) {
                                     QueueEntity updatedElement = updateEntityOptional.get();
                                     if (updatedElement.getCurrentStatus().equals(ImportStatus.CANCELED)) {
+                                        //element.setCurrentStatus(ImportStatus.CANCELED);
+                                        //TODO we don't need this method
+                                        //moveFileToInCancelFolder(element.getFilename());
+                                        FileManagement.moveFile(element, ImportStatus.CANCELED, configProperties.getTransactionFolder(), logger);
                                         element.setCurrentStatus(ImportStatus.CANCELED);
-                                        moveFileToInCancelFolder(element.getFilename());
                                     } else {
-                                        moveFileToErrorFolder(element.getFilename());
+                                        //TODO we don't need this method
+                                        //moveFileToErrorFolder(element.getFilename());
+                                        //move file to error folder
+                                        //element.setCurrentStatus(ImportStatus.ERROR);
+                                        FileManagement.moveFile(element, ImportStatus.ERROR, configProperties.getTransactionFolder(), logger);
                                         element.setCurrentStatus(ImportStatus.ERROR);
                                     }
 
@@ -205,7 +219,7 @@ public class ImportService {
                             }
                             element.setEndImportDate(OffsetDateTime.now());
                             queueRepository.save(element);
-                        } else{
+                        /*} else{
                             logger.severe("File is already locked by another thread/process.");
                         }
 
@@ -213,7 +227,7 @@ public class ImportService {
                     if (lock != null) {
                         lock.release();
                     }
-                }
+                }*/
 
             } catch (IOException e) {
                 logger.severe(e.getMessage());
@@ -358,14 +372,18 @@ public class ImportService {
             logger.info(String.format("Moving file %s from %s to %s.", fileName, sourceFolder, destinationFolder));
             Path sourcePath = Paths.get(sourceFolder, fileName);
             Path destinationPath = Paths.get(destinationFolder, fileName);
+            File sourceFile = new File(sourceFolder);
+            File destinationFile = new File(destinationFolder);
+
 
             // Check if file exists in destination folder
-            if (Files.exists(destinationPath)) {
+            /*if (Files.exists(destinationPath)) {
                 // If file with same name exists in destination, delete it
                 Files.delete(destinationPath);
-            }
+            }*/
 
-            Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            //Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(sourceFile.toPath().resolve(fileName), destinationFile.toPath().resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
             return true;
         } catch (IOException e) {
             // Handle file moving failure
@@ -385,8 +403,16 @@ public class ImportService {
     }
 
     private void moveFileToInProgressFolder(String fileName) {
-        String errorFolderPath = configProperties.getTransactionFolder() + "/" + TcConstants.FOLDER_IN_PROGRESS;
-        moveFile(configProperties.getTransactionFolder() + "/" + FOLDER_TODO, errorFolderPath, fileName);
+        /*String errorFolderPath = configProperties.getTransactionFolder() + "/" + TcConstants.FOLDER_IN_PROGRESS;
+        moveFile(configProperties.getTransactionFolder() + "/" + FOLDER_TODO, errorFolderPath, fileName);*/
+        QueueEntity queueEntity = new QueueEntity();
+        try {
+            queueEntity.setCurrentStatus(ImportStatus.IN_SCOPE);
+            queueEntity.setFilename(fileName);
+            FileManagement.moveFile(queueEntity, ImportStatus.IN_PROGRESS, configProperties.getTransactionFolder(), logger);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void moveFileToInCancelFolder(String fileName) {
