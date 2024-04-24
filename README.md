@@ -60,7 +60,7 @@ BEGIN
 INSERT INTO status_color (status, color) VALUES ('IN_SCOPE', '#A2CFCF') 
 INSERT INTO status_color (status, color) VALUES ('IN_REVIEW', '#FFBE33')
 INSERT INTO status_color (status, color) VALUES ('IN_PROGRESS', '#33AFFF')
-INSERT INTO status_color (status, color) VALUES ('DELETE', '#33FFFC') 
+INSERT INTO status_color (status, color) VALUES ('DELETED', '#33FFFC') 
 INSERT INTO status_color (status, color) VALUES ('CANCEL', '#FF6833')
 INSERT INTO status_color (status, color) VALUES ('ERROR', '#FF3333')
 INSERT INTO status_color (status, color) VALUES ('DONE', '#68FF33')
