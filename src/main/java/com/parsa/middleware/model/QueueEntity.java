@@ -11,7 +11,7 @@ import java.util.Objects;
 
 @EntityListeners(QueueEntityListener.class)
 @Entity
-@Table(name = "queue", schema = "dbo", catalog = "sbomiDB")
+@Table(name = "queue")
 public class QueueEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id

@@ -48,3 +48,20 @@ Once the application is running, access the API documentation using the followin
 To build the JAR file, execute the following command:
 ```bash
 mvn clean package
+
+```
+`
+### Manual Scripts to Run in Database for color
+
+```bash
+
+IF NOT EXISTS(SELECT status FROM status_color stc WHERE stc.status IN ('IN_SCOPE','IN_REVIEW', 'IN_PROGRESS', 'DELETE', 'CANCEL', 'ERROR'))
+BEGIN 
+INSERT INTO status_color (status, color) VALUES ('IN_SCOPE', '#A2CFCF') 
+INSERT INTO status_color (status, color) VALUES ('IN_REVIEW', '#FFBE33')
+INSERT INTO status_color (status, color) VALUES ('IN_PROGRESS', '#33AFFF')
+INSERT INTO status_color (status, color) VALUES ('DELETED', '#33FFFC') 
+INSERT INTO status_color (status, color) VALUES ('CANCEL', '#FF6833')
+INSERT INTO status_color (status, color) VALUES ('ERROR', '#FF3333')
+INSERT INTO status_color (status, color) VALUES ('DONE', '#68FF33')
+END

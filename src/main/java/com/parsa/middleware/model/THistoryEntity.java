@@ -5,7 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 @Entity
-@Table(name = "t_history", schema = "dbo", catalog = "sbomiDB")
+@Table(name = "t_history")
 public class THistoryEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
