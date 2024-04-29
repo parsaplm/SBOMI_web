@@ -20,18 +20,18 @@ spring:
   datasource:
     driverClassName: com.microsoft.sqlserver.jdbc.SQLServerDriver
     platform: mssql
-    url: jdbc:sqlserver://dev6000:1433;DatabaseName=sbomiDB;integratedSecurity=false;encrypt=true;trustServerCertificate=true
-    username: ENC(oh4KHRmJbkrgwMi6fB8eE54815FvdfO+Wj1uvXajdQf5SPnVT+TDi/g1adjELnpt)
-    password: ENC(zX8Aipex1Mhz84anz+EgDga1tkpSvUKMzglU0T5NuVbUnj9MFDDoYdhPKZiK+KWw)
+    url: jdbc:sqlserver://192.168.1.30:1433;DatabaseName=sbomiDB_DEV;integratedSecurity=false;encrypt=true;trustServerCertificate=true
+    username: ENC(eR2pacUyX7d282f11v8iTWfScB2RcSiskxg9xTasgCbsrgLGPe873qIoFE4reJws)
+    password: ENC(XcHxvNfUQO3qm3/GUfWxcOCIBz7+I/f7KXlCZdqu8RqA8AdOG4qwtN6GO9sOMSQK)
     initialization-mode: always
     show-sql: true
     hikari: {
       maximum-pool-size: 20,
       driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
     }
-url: http://dev6000:3000/tc
+url: http://192.168.1.30:3000/tc
 uName: infodba
-password: ENC(MZMcppLKPE4XjYHyvakE2UDInlwaGb1cFD4dWQ6G6rPJThCS52xqAunoJJWy9z33)
+password: ENC(OrW+32SDuTE5gbq7+H2sEbu4il2iOy+XJg9oF8Ci86lkMywvHE0zlUlDRN7vJ72I)
 tcMaxRetries: '10'
 tcRetryDelay: '1'
 transactionFolder: /Users/imranali/Desktop/transaction
@@ -42,7 +42,11 @@ maximumErrors: '524'
 alwaysClassify: false
 searchParallel: '1'
 deleteSchedule: 0 0 * * * *
-awcUrl: http://dev6000:3000/tcs
+awcUrl: http://192.168.1.30:3000/tcs
+#Application Instance Data
+instanceUrl: http://test@parsa-plm:8085
+instanceName: TEST_INSTANCE
+instanceEnvironmentName: TEST_ENV
 app:
   frontend: {
     base-url: '*'

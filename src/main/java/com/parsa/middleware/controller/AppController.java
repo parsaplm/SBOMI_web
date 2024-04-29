@@ -2,15 +2,18 @@ package com.parsa.middleware.controller;
 
 import com.parsa.middleware.Application;
 import com.parsa.middleware.config.Loggable;
+import com.parsa.middleware.model.AppInstance;
+import com.parsa.middleware.repository.AppInstanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
 /**
  * Controller class for handling application-related operations.
  */
@@ -20,6 +23,8 @@ public class AppController {
 
     @Autowired
     private ConfigurableApplicationContext applicationContext;
+    @Autowired
+    private AppInstanceRepository appInstanceRepository;
 
     /**
      * Restarts the Spring Boot application.
@@ -40,6 +45,10 @@ public class AppController {
         thread.start();
 
         return "Application restarted";
+    }
+    @PostMapping("/app-instance")
+    public List<AppInstance> getAppInstance(){
+        return appInstanceRepository.findAll();
     }
 }
 

@@ -1,12 +1,9 @@
 package com.parsa.middleware.config;
 
-import com.parsa.middleware.processing.Utility;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
-import org.springframework.core.env.Environment;
+import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @RefreshScope
@@ -56,6 +53,13 @@ public class ConfigProperties {
     private String deleteSchedule;
     @Value("${awcUrl}")
     private String awcUrl;
+    @Value("${instanceUrl}")
+    private String instanceUrl;
+    @Value("${instanceName}")
+    private String instanceName;
+    @Value("${instanceEnvironmentName}")
+    private String instanceEnvironmentName;
+
 
     public String getUrl() {
         return url;
@@ -173,13 +177,37 @@ public class ConfigProperties {
         this.awcUrl = awcUrl;
     }
 
+    public String getInstanceUrl() {
+        return instanceUrl;
+    }
+
+    public void setInstanceUrl(String instanceUrl) {
+        this.instanceUrl = instanceUrl;
+    }
+
+    public String getInstanceName() {
+        return instanceName;
+    }
+
+    public void setInstanceName(String instanceName) {
+        this.instanceName = instanceName;
+    }
+
+    public String getInstanceEnvironmentName() {
+        return instanceEnvironmentName;
+    }
+
+    public void setInstanceEnvironmentName(String instanceEnvironmentName) {
+        this.instanceEnvironmentName = instanceEnvironmentName;
+    }
+
     private String decryptProperty(String encryptedProperty) {
         // Check if property is encrypted
         if (StringUtils.isEmpty(encryptedProperty)) {
             return encryptedProperty;
         }
         // Decrypt property
-        return  encryptedProperty.startsWith("ENC(") ? encryptedProperty.substring(4, encryptedProperty.length() - 1) : encryptedProperty;
+        return encryptedProperty.startsWith("ENC(") ? encryptedProperty.substring(4, encryptedProperty.length() - 1) : encryptedProperty;
     }
 
 
