@@ -1,6 +1,8 @@
 
 *.class
 target/
-.idea/
 *.log
+*.iml
+/.idea/
+/.idea
 *.iml
