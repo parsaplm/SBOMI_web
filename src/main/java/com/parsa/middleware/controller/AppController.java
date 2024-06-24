@@ -23,8 +23,6 @@ public class AppController {
 
     @Autowired
     private ConfigurableApplicationContext applicationContext;
-    @Autowired
-    private AppInstanceRepository appInstanceRepository;
 
     /**
      * Restarts the Spring Boot application.
@@ -46,9 +44,6 @@ public class AppController {
 
         return "Application restarted";
     }
-    @PostMapping("/app-instance")
-    public List<AppInstance> getAppInstance(){
-        return appInstanceRepository.findAll();
-    }
+
 }
 

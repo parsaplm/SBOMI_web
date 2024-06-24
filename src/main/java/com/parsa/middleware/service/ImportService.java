@@ -6,6 +6,7 @@ import com.parsa.middleware.enums.ImportStatus;
 import com.parsa.middleware.model.QueueEntity;
 import com.parsa.middleware.processing.ImportData;
 import com.parsa.middleware.processing.Utility;
+import com.parsa.middleware.repository.AppInstanceRepository;
 import com.parsa.middleware.repository.QueueRepository;
 import com.parsa.middleware.util.JsonUtil;
 import com.parsa.middleware.util.Utils;
@@ -46,6 +47,9 @@ public class ImportService {
     private final Map<ImportStatus, String> statusFolderMapping;
     @Autowired
     private QueueRepository queueRepository;
+
+    @Autowired
+    AppInstanceRepository appInstanceRepository;
     private List<Thread> threadList = new ArrayList<>();
 
     @Autowired
@@ -158,7 +162,7 @@ public class ImportService {
                             JSONObject jsonObject = new JSONObject(jsonString);
 
                             // Reset import status and progress (assuming relevant methods in QueueElement)
-                            element.setImportProgress(0);
+                         //   element.setImportProgress(0);
 
 
                             // Change import status to IN_PROGRESS (assuming relevant method in QueueElement)
@@ -173,40 +177,53 @@ public class ImportService {
                             // Set import start time
                             element.setStartImportDate(OffsetDateTime.now());
                             element.setSbomiHostName(Utility.getHostName());
+
+                            element.setAppInstance(appInstanceRepository.findByInstanceName(configProperties.getInstanceName()).get(0));
+
 //                        updateQueueElementStartTime(element); // Update start time in repository
                             queueRepository.save(element);
                             // Import logic (replace with your actual implementation)
                             ImportData localImportData = context.getBean(ImportData.class);
                             final String teamcenterObjectName = localImportData.importStructure(jsonObject, element);
-                            // Update status based on import result
-                            if (teamcenterObjectName != null && !teamcenterObjectName.isEmpty()) {
-                                //TODO we don't need this method
-                                //moveFileToDoneFolder(element.getFilename());
-                                //element.setCurrentStatus(ImportStatus.DONE);
-                                element.setTeamcenterRootObject(teamcenterObjectName);
-                                FileManagement.moveFile(element, ImportStatus.DONE, configProperties.getTransactionFolder(), logger);
-                                element.setCurrentStatus(ImportStatus.DONE);
-                            } else {
 
-                                Optional<QueueEntity> updateEntityOptional = queueRepository.findById(element.getTaskId());
+                            Optional<QueueEntity> updateEntityOptional = queueRepository.findById(element.getTaskId());
+                            if (updateEntityOptional.isPresent()) {
+                                QueueEntity updatedElement = updateEntityOptional.get();
 
-                                // Check if the entity is present and if the status is CANCELED
-                                if (updateEntityOptional.isPresent()) {
-                                    QueueEntity updatedElement = updateEntityOptional.get();
-                                    if (updatedElement.getCurrentStatus().equals(ImportStatus.CANCELED)) {
-                                        //element.setCurrentStatus(ImportStatus.CANCELED);
-                                        //TODO we don't need this method
-                                        //moveFileToInCancelFolder(element.getFilename());
-                                        FileManagement.moveFile(element, ImportStatus.CANCELED, configProperties.getTransactionFolder(), logger);
-                                        element.setCurrentStatus(ImportStatus.CANCELED);
-                                    } else {
-                                        //TODO we don't need this method
-                                        //moveFileToErrorFolder(element.getFilename());
-                                        //move file to error folder
-                                        //element.setCurrentStatus(ImportStatus.ERROR);
-                                        FileManagement.moveFile(element, ImportStatus.ERROR, configProperties.getTransactionFolder(), logger);
-                                        element.setCurrentStatus(ImportStatus.ERROR);
-                                    }
+                                // Update status based on import result
+                                if (teamcenterObjectName != null && !teamcenterObjectName.isEmpty()) {
+
+//                                Optional<QueueEntity> updateEntityOptional = queueRepository.findById(element.getTaskId());
+//                                if (updateEntityOptional.isPresent()) {
+//                                    QueueEntity updatedElement = updateEntityOptional.get();
+                                    updatedElement.setTeamcenterRootObject(teamcenterObjectName);
+                                    FileManagement.moveFile(updatedElement, ImportStatus.DONE, configProperties.getTransactionFolder(), logger);
+                                    updatedElement.setCurrentStatus(ImportStatus.DONE);
+
+//                                }
+
+
+                                } else {
+
+//                                    Optional<QueueEntity> updateEntityOptional = queueRepository.findById(element.getTaskId());
+
+                                    // Check if the entity is present and if the status is CANCELED
+//                                    if (updateEntityOptional.isPresent()) {
+//                                        QueueEntity updatedElement = updateEntityOptional.get();
+                                        if (updatedElement.getCurrentStatus().equals(ImportStatus.CANCELED)) {
+                                            //element.setCurrentStatus(ImportStatus.CANCELED);
+                                            //TODO we don't need this method
+                                            //moveFileToInCancelFolder(element.getFilename());
+                                            FileManagement.moveFile(updatedElement, ImportStatus.CANCELED, configProperties.getTransactionFolder(), logger);
+                                            updatedElement.setCurrentStatus(ImportStatus.CANCELED);
+                                        } else {
+                                            //TODO we don't need this method
+                                            //moveFileToErrorFolder(element.getFilename());
+                                            //move file to error folder
+                                            //element.setCurrentStatus(ImportStatus.ERROR);
+                                            FileManagement.moveFile(updatedElement, ImportStatus.ERROR, configProperties.getTransactionFolder(), logger);
+                                            updatedElement.setCurrentStatus(ImportStatus.ERROR);
+                                        }
 
 //                                if (element.getCurrentStatus().equals(ImportStatus.CANCELED)) {
 ////                                // Import canceled
@@ -214,11 +231,12 @@ public class ImportService {
 //                                    moveFileToInCancelFolder(element.getFilename());
 ////                                return;
 //                                }
-                                }
+//                                    }
 
+                                }
+                                updatedElement.setEndImportDate(OffsetDateTime.now());
+                                queueRepository.save(updatedElement);
                             }
-                            element.setEndImportDate(OffsetDateTime.now());
-                            queueRepository.save(element);
                         /*} else{
                             logger.severe("File is already locked by another thread/process.");
                         }

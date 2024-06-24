@@ -61,6 +61,11 @@ public class QueueEntity {
     @Column(name = "sbomi_host_name")
     private String sbomiHostName;
 
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "instance_id")
+    private AppInstance appInstance;
+
     public int getTaskId() {
         return taskId;
     }
@@ -180,6 +185,15 @@ public class QueueEntity {
 
     public void setSbomiHostName(String sbomiHostName) {
         this.sbomiHostName = sbomiHostName;
+    }
+
+
+    public AppInstance getAppInstance() {
+        return appInstance;
+    }
+
+    public void setAppInstance(AppInstance appInstance) {
+        this.appInstance = appInstance;
     }
 
     @Override

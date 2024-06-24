@@ -3,7 +3,9 @@ package com.parsa.middleware.controller;
 import com.parsa.middleware.constants.TcConstants;
 import com.parsa.middleware.dto.CombinedAuditDTO;
 import com.parsa.middleware.enums.ImportStatus;
+import com.parsa.middleware.model.AppInstance;
 import com.parsa.middleware.model.QueueEntity;
+import com.parsa.middleware.repository.AppInstanceRepository;
 import com.parsa.middleware.repository.QueueRepository;
 import com.parsa.middleware.service.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ public class QueueEntityController {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private AppInstanceRepository appInstanceRepository;
+
     @GetMapping("/queue-entities")
     public Page<QueueEntity> getQueueEntitiesByStatus(
             @RequestParam("statuses") List<ImportStatus> statuses,
@@ -36,28 +41,35 @@ public class QueueEntityController {
             @RequestParam(value = "sort", defaultValue = "taskId") String sortField,
             @RequestParam(value = "direction", defaultValue = "asc") String sortDirection,
             @RequestParam(value = "query", defaultValue = "") String query,
-            @RequestParam(value = "searchCriteria", defaultValue = "") String searchCriteria) {
+            @RequestParam(value = "searchCriteria", defaultValue = "") String searchCriteria,
+            @RequestParam("appInstanceName") String appInstanceName) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortDirection), sortField));
+
+        AppInstance appInstance = appInstanceRepository.findByInstanceName(appInstanceName).get(0);
+
+
         Page<QueueEntity> response = null;
         if (query != null && !query.isEmpty() && searchCriteria != null && !searchCriteria.isEmpty()) {
             switch (searchCriteria) {
                 case TcConstants.SC_FILE_NAME:
-                    response = queueRepository.findMatchingFilenameIncludeStatuses(query, statuses, pageable);
+                    response = queueRepository.findMatchingFilenameIncludeStatusesAndAppInstanceInstanceId(query, statuses, pageable);
                     break;
                 case TcConstants.SC_DRAWING_NUMBER:
-                    response = queueRepository.findMatchingDrawingNumberIncludeStatuses(query, statuses, pageable);
+                    response = queueRepository.findByDrawingNumberContainingAndCurrentStatusInAndAppInstanceInstanceId(query, statuses, pageable, appInstance.getInstanceId());
                     break;
                 case TcConstants.SC_TEAMCENTER_ROOT_OBJECT:
-                    response = queueRepository.findMatchingTeamcenterRootObjectIncludeStatuses(query, statuses, pageable);
+                    response = queueRepository.findMatchingTeamcenterRootObjectIncludeStatusesAndAppInstanceInstanceId(query, statuses, pageable);
                     break;
                 case TcConstants.SC_LOG_FILE_NAME:
-                    response = queueRepository.findMatchingLogfileNameIncludeStatuses(query, statuses, pageable);
+                    response = queueRepository.findMatchingLogfileNameIncludeStatusesAndAppInstanceInstanceId(query, statuses, pageable);
                     break;
 
             }
 
         } else {
-            response = queueRepository.findByCurrentStatusInOrderByIsFavoriteDesc(statuses, pageable);
+//            response = queueRepository.findByCurrentStatusInOrderByIsFavoriteDesc(statuses, pageable);
+//            response = queueRepository.findByCurrentStatusInAndAppInstanceInstanceIdOrderByIsFavoriteDesc(statuses, appInstance.getInstanceId(),  pageable);
+            response = queueRepository.findByCurrentStatusInAndAppInstanceInstanceIdOrCurrentStatusOrderByIsFavoriteDesc(statuses, appInstance.getInstanceId(), ImportStatus.IN_SCOPE,  pageable);
         }
 
 

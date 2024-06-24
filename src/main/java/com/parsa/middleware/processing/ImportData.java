@@ -340,8 +340,9 @@ public class ImportData extends Utility {
 		setLogFileName(queue);
 		queue.setStartImportDate(OffsetDateTime.now());
 		queueRepository.save(queue);
-		teamcenterLogin();
+
 		try {
+			teamcenterLogin();
 //			setPolicy();
 
 			final SearchManagement searchManagement = new SearchManagement(logger,
@@ -416,8 +417,10 @@ public class ImportData extends Utility {
 //			endImport(false);
 		}
 		finally {
+			session.logout();
 			importStatistic.setEndImportTime();
 			endImport(false);
+
 		}
 
 
