@@ -48,7 +48,7 @@ Once the application is running, access the API documentation using the followin
 To build the JAR file, execute the following command:
 ```bash
 mvn clean package
-
+```
 
 ###Open the Project in IntelliJ IDEA
 
@@ -59,9 +59,11 @@ Configure Environment Variables and VM Options
 Go to Run > Edit Configurations.
 Select your run configuration (or create a new one for your application).
 In the Environment Variables field, add the following:
-'''SPRING_CONFIG_LOCATION=resources/application.yaml
+```SPRING_CONFIG_LOCATION=resources/application.yaml
+```
 In the VM Options field, add the following:
-'''-Djasypt.encryptor.password=yoursecret
+```-Djasypt.encryptor.password=yoursecret
+```
 Run the Application
 Click the Run button in IntelliJ IDEA to start the application using the configured environment variables and VM options.
 
